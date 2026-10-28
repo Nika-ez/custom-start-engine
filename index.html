@@ -1681,7 +1681,7 @@
             <main class="home-main">
                 <div class="hero">
                     <div class="hero-copy" id="heroCopy">
-                        <p class="eyebrow" id="greeting">Good evening, Max.</p>
+                        <p class="eyebrow" id="greeting">Good evening, Nika.</p>
                         <p class="subline" id="dateLine">Wednesday, 28 October</p>
                     </div>
 
@@ -1721,7 +1721,7 @@
                     v2.4 <span class="version-sep">·</span> Aurora
                 </button>
                 <div class="footer-note">
-                    <span>Made by Max</span>
+                    <span>Made by Nika</span>
                     <span class="footer-sep">·</span>
                     <button class="link-btn" id="footerCustomize" type="button">Customize</button>
                 </div>
@@ -1747,7 +1747,7 @@
             <main class="about-main">
                 <section class="about-hero">
                     <div class="about-logo" aria-hidden="true">E</div>
-                    <p class="about-kicker">Made by Max</p>
+                    <p class="about-kicker">Made by Nika</p>
                     <h1>Engine <span>v2.4.0</span></h1>
                     <p class="about-sub">The Aurora update. A startpage that finally knows what it is doing — themes, shortcuts, backups and a customizer that actually customizes.</p>
                 </section>
@@ -1822,7 +1822,7 @@
                 </div>
 
                 <footer class="about-footer">
-                    <span>Engine v2.4.0 · Aurora · Made by Max</span>
+                    <span>Engine v2.4.0 · Aurora · Made by Nika</span>
                     <button class="btn btn-primary" id="aboutHomeBtn" type="button">
                         Back Home
                         <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
@@ -1914,7 +1914,7 @@
                             <p class="card-sub">Keep the useful bits and hide the rest.</p>
                             <div class="field">
                                 <label for="userName">Your name</label>
-                                <input type="text" id="userName" class="input" data-config="userName" maxlength="24" placeholder="Max" autocomplete="off">
+                                <input type="text" id="userName" class="input" data-config="userName" maxlength="24" placeholder="Nika" autocomplete="off">
                                 <span class="hint">Used in the greeting. Leave it empty for a plain hello.</span>
                             </div>
                             <div class="toggle-list">
@@ -2118,7 +2118,7 @@
                                 <div class="keymap-row"><span>Storage</span><span>This browser, on this device</span></div>
                                 <div class="keymap-row"><span>Config namespace</span><span class="mono">sp2:config</span></div>
                                 <div class="keymap-row"><span>Old shortcuts key</span><span class="mono">engineShortcuts</span></div>
-                                <div class="keymap-row"><span>Word from the author</span><span>Max</span></div>
+                                <div class="keymap-row"><span>Made by</span><span>Nika</span></div>
                             </div>
                         </section>
                     </div>
@@ -2230,6 +2230,7 @@
            ============================================================ */
 
         const APP_VERSION = "2.4.0";
+        const CONFIG_VERSION = 3;
         const MAX_SHORTCUTS = 40;
 
         const STORAGE_KEYS = {
@@ -2246,9 +2247,11 @@
             geminiHeight: "geminiInputHeight"
         };
 
-        const LEGACY_FALLBACK_SHORTCUTS = Object.freeze({
-            m: "https://myinstants.com",
-            y: "https://YouTube.com"
+        // These were the old personal defaults. They are stripped once from
+        // pre-v3 configs so fresh visitors start with a clean shortcut list.
+        const RETIRED_DEFAULT_SHORTCUTS = Object.freeze({
+            m: "https://myinstants.com/",
+            y: "https://youtube.com/"
         });
 
         const THEMES = {
@@ -2269,7 +2272,7 @@
         };
 
         const DEFAULT_CONFIG = {
-            configVersion: 2,
+            configVersion: CONFIG_VERSION,
             theme: "midnight",
             accent: "#8ab4f8",
             background: "aurora",
@@ -2280,7 +2283,7 @@
             showClock: true,
             clock24h: false,
             showGreeting: true,
-            userName: "Max",
+            userName: "Nika",
             showShortcutChips: true,
             showGoogle: true,
             showGemini: true,
@@ -2467,7 +2470,7 @@
                 : DEFAULT_CONFIG.background;
 
             return {
-                configVersion: 2,
+                configVersion: CONFIG_VERSION,
                 theme,
                 accent: normalizeHex(source.accent, THEMES[theme].accent),
                 background,
@@ -2494,6 +2497,25 @@
                 autofocus: source.autofocus !== false,
                 shortcuts: normalizeShortcuts(source.shortcuts)
             };
+        };
+
+        const withoutRetiredShortcuts = (shortcuts) => {
+            const cleaned = { ...shortcuts };
+            for (const [trigger, url] of Object.entries(RETIRED_DEFAULT_SHORTCUTS)) {
+                if (cleaned[trigger] === url) delete cleaned[trigger];
+            }
+            return cleaned;
+        };
+
+        const migrateConfig = (input) => {
+            const source = isPlainObject(input) ? clone(input) : {};
+            const version = Number(source.configVersion);
+            if (Number.isFinite(version) && version >= CONFIG_VERSION) return source;
+
+            source.shortcuts = withoutRetiredShortcuts(normalizeShortcuts(source.shortcuts));
+            source.userName = DEFAULT_CONFIG.userName;
+            source.configVersion = CONFIG_VERSION;
+            return source;
         };
 
         /* ============================================================
@@ -2528,16 +2550,28 @@
         };
 
         const readLegacyShortcuts = () => {
-            const parsed = safeParse(storage.get(LEGACY_KEYS.shortcuts), null);
-            const shortcuts = normalizeShortcuts(parsed);
+            const raw = storage.get(LEGACY_KEYS.shortcuts);
+            const parsed = safeParse(raw, null);
+            const normalized = normalizeShortcuts(parsed);
+            const shortcuts = withoutRetiredShortcuts(normalized);
+            if (raw && JSON.stringify(shortcuts) !== JSON.stringify(normalized)) {
+                storage.set(LEGACY_KEYS.shortcuts, JSON.stringify(shortcuts));
+            }
             return { shortcuts, count: Object.keys(shortcuts).length };
         };
 
         const loadInitialConfig = () => {
             const stored = storage.get(STORAGE_KEYS.config);
             if (stored) {
+                const parsed = safeParse(stored, null);
+                const config = normalizeConfig(migrateConfig(parsed));
+                const previousVersion = Number(parsed && parsed.configVersion) || 0;
+                if (previousVersion < CONFIG_VERSION) {
+                    storage.set(STORAGE_KEYS.config, JSON.stringify(config));
+                    storage.set(LEGACY_KEYS.shortcuts, JSON.stringify(config.shortcuts));
+                }
                 return {
-                    config: normalizeConfig(safeParse(stored, null)),
+                    config,
                     migrated: false,
                     legacyCount: 0
                 };
@@ -2554,12 +2588,13 @@
             const legacy = readLegacyShortcuts();
 
             if (alternate) {
-                const merged = normalizeConfig(alternate);
+                const merged = normalizeConfig(migrateConfig(alternate));
                 for (const [trigger, url] of Object.entries(legacy.shortcuts)) {
                     if (!Object.prototype.hasOwnProperty.call(merged.shortcuts, trigger)) {
                         merged.shortcuts[trigger] = url;
                     }
                 }
+                merged.shortcuts = withoutRetiredShortcuts(merged.shortcuts);
                 storage.set(STORAGE_KEYS.config, JSON.stringify(merged));
                 return { config: merged, migrated: legacy.count > 0, legacyCount: legacy.count };
             }
@@ -2571,7 +2606,7 @@
             }
 
             return {
-                config: normalizeConfig({ ...DEFAULT_CONFIG, shortcuts: { ...LEGACY_FALLBACK_SHORTCUTS } }),
+                config: normalizeConfig(DEFAULT_CONFIG),
                 migrated: false,
                 legacyCount: 0
             };

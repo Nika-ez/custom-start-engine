@@ -3,6 +3,7 @@
            ============================================================ */
 
         const APP_VERSION = "2.4.0";
+        const CONFIG_VERSION = 3;
         const MAX_SHORTCUTS = 40;
 
         const STORAGE_KEYS = {
@@ -19,9 +20,11 @@
             geminiHeight: "geminiInputHeight"
         };
 
-        const LEGACY_FALLBACK_SHORTCUTS = Object.freeze({
-            m: "https://myinstants.com",
-            y: "https://YouTube.com"
+        // These were the old personal defaults. They are stripped once from
+        // pre-v3 configs so fresh visitors start with a clean shortcut list.
+        const RETIRED_DEFAULT_SHORTCUTS = Object.freeze({
+            m: "https://myinstants.com/",
+            y: "https://youtube.com/"
         });
 
         const THEMES = {
@@ -42,7 +45,7 @@
         };
 
         const DEFAULT_CONFIG = {
-            configVersion: 2,
+            configVersion: CONFIG_VERSION,
             theme: "midnight",
             accent: "#8ab4f8",
             background: "aurora",
@@ -53,7 +56,7 @@
             showClock: true,
             clock24h: false,
             showGreeting: true,
-            userName: "Max",
+            userName: "Nika",
             showShortcutChips: true,
             showGoogle: true,
             showGemini: true,
@@ -240,7 +243,7 @@
                 : DEFAULT_CONFIG.background;
 
             return {
-                configVersion: 2,
+                configVersion: CONFIG_VERSION,
                 theme,
                 accent: normalizeHex(source.accent, THEMES[theme].accent),
                 background,
@@ -267,6 +270,25 @@
                 autofocus: source.autofocus !== false,
                 shortcuts: normalizeShortcuts(source.shortcuts)
             };
+        };
+
+        const withoutRetiredShortcuts = (shortcuts) => {
+            const cleaned = { ...shortcuts };
+            for (const [trigger, url] of Object.entries(RETIRED_DEFAULT_SHORTCUTS)) {
+                if (cleaned[trigger] === url) delete cleaned[trigger];
+            }
+            return cleaned;
+        };
+
+        const migrateConfig = (input) => {
+            const source = isPlainObject(input) ? clone(input) : {};
+            const version = Number(source.configVersion);
+            if (Number.isFinite(version) && version >= CONFIG_VERSION) return source;
+
+            source.shortcuts = withoutRetiredShortcuts(normalizeShortcuts(source.shortcuts));
+            source.userName = DEFAULT_CONFIG.userName;
+            source.configVersion = CONFIG_VERSION;
+            return source;
         };
 
         /* ============================================================
@@ -301,16 +323,28 @@
         };
 
         const readLegacyShortcuts = () => {
-            const parsed = safeParse(storage.get(LEGACY_KEYS.shortcuts), null);
-            const shortcuts = normalizeShortcuts(parsed);
+            const raw = storage.get(LEGACY_KEYS.shortcuts);
+            const parsed = safeParse(raw, null);
+            const normalized = normalizeShortcuts(parsed);
+            const shortcuts = withoutRetiredShortcuts(normalized);
+            if (raw && JSON.stringify(shortcuts) !== JSON.stringify(normalized)) {
+                storage.set(LEGACY_KEYS.shortcuts, JSON.stringify(shortcuts));
+            }
             return { shortcuts, count: Object.keys(shortcuts).length };
         };
 
         const loadInitialConfig = () => {
             const stored = storage.get(STORAGE_KEYS.config);
             if (stored) {
+                const parsed = safeParse(stored, null);
+                const config = normalizeConfig(migrateConfig(parsed));
+                const previousVersion = Number(parsed && parsed.configVersion) || 0;
+                if (previousVersion < CONFIG_VERSION) {
+                    storage.set(STORAGE_KEYS.config, JSON.stringify(config));
+                    storage.set(LEGACY_KEYS.shortcuts, JSON.stringify(config.shortcuts));
+                }
                 return {
-                    config: normalizeConfig(safeParse(stored, null)),
+                    config,
                     migrated: false,
                     legacyCount: 0
                 };
@@ -327,12 +361,13 @@
             const legacy = readLegacyShortcuts();
 
             if (alternate) {
-                const merged = normalizeConfig(alternate);
+                const merged = normalizeConfig(migrateConfig(alternate));
                 for (const [trigger, url] of Object.entries(legacy.shortcuts)) {
                     if (!Object.prototype.hasOwnProperty.call(merged.shortcuts, trigger)) {
                         merged.shortcuts[trigger] = url;
                     }
                 }
+                merged.shortcuts = withoutRetiredShortcuts(merged.shortcuts);
                 storage.set(STORAGE_KEYS.config, JSON.stringify(merged));
                 return { config: merged, migrated: legacy.count > 0, legacyCount: legacy.count };
             }
@@ -344,7 +379,7 @@
             }
 
             return {
-                config: normalizeConfig({ ...DEFAULT_CONFIG, shortcuts: { ...LEGACY_FALLBACK_SHORTCUTS } }),
+                config: normalizeConfig(DEFAULT_CONFIG),
                 migrated: false,
                 legacyCount: 0
             };
