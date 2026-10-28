@@ -1,0 +1,4188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight" data-bg="aurora">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#131314" id="themeColorMeta">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="Engine — a personal startpage with Google search, Gemini, shortcuts and a real customizer.">
+    <title>Engine — Startpage</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23131314'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%238ab4f8'/%3E%3C/svg%3E">
+    <style>
+        /* ============================================================
+           Engine v2.4 — single-file startpage
+           ============================================================ */
+
+        :root {
+            --accent: #8ab4f8;
+            --accent-ink: #0b0f14;
+            --accent-soft: rgba(138, 180, 248, 0.14);
+            --accent-glow: rgba(138, 180, 248, 0.35);
+            --accent-strong: #a8c7fa;
+            --radius: 20px;
+            --page-pad: clamp(18px, 3.5vw, 34px);
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        html[data-theme="midnight"] {
+            --bg: #131314;
+            --surface: #1e1f20;
+            --surface-2: #28292a;
+            --surface-3: #3c4043;
+            --text: #e8eaed;
+            --muted: #9aa0a6;
+            --border: #3c4043;
+            --shadow-color: rgba(0, 0, 0, 0.42);
+            --gemini-from: #1ba1e2;
+            --gemini-via: #a033ff;
+            --gemini-to: #ff4f8b;
+        }
+
+        html[data-theme="amoled"] {
+            --bg: #000000;
+            --surface: #0d0d0d;
+            --surface-2: #171717;
+            --surface-3: #2a2a2a;
+            --text: #f1f3f4;
+            --muted: #9aa0a6;
+            --border: #262626;
+            --shadow-color: rgba(0, 0, 0, 0.72);
+            --gemini-from: #1ba1e2;
+            --gemini-via: #a033ff;
+            --gemini-to: #ff4f8b;
+        }
+
+        html[data-theme="slate"] {
+            --bg: #0b1220;
+            --surface: #141d2e;
+            --surface-2: #1b273b;
+            --surface-3: #2a3a55;
+            --text: #e6edf7;
+            --muted: #93a4bd;
+            --border: #26344a;
+            --shadow-color: rgba(0, 0, 0, 0.46);
+            --gemini-from: #38bdf8;
+            --gemini-via: #818cf8;
+            --gemini-to: #f472b6;
+        }
+
+        html[data-theme="ocean"] {
+            --bg: #061a20;
+            --surface: #0c2831;
+            --surface-2: #11343f;
+            --surface-3: #1b454f;
+            --text: #e3f4f4;
+            --muted: #8fb3b8;
+            --border: #1b454f;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --gemini-from: #22d3ee;
+            --gemini-via: #2dd4bf;
+            --gemini-to: #a78bfa;
+        }
+
+        html[data-theme="light"] {
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #eef1f7;
+            --surface-3: #e2e6ee;
+            --text: #1f2328;
+            --muted: #5f6368;
+            --border: #d7dce5;
+            --shadow-color: rgba(31, 35, 40, 0.10);
+            --gemini-from: #1a73e8;
+            --gemini-via: #9334e6;
+            --gemini-to: #d01884;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body { min-height: 100%; }
+
+        body {
+            margin: 0;
+            min-height: 100svh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body.modal-open { overflow: hidden; }
+
+        button, input, textarea, select { font: inherit; color: inherit; }
+        button { cursor: pointer; }
+        a { color: var(--accent); }
+
+        [hidden], .hidden { display: none !important; }
+
+        ::selection { background: var(--accent); color: var(--accent-ink); }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex: none;
+        }
+
+        /* ---------- Ambient background ---------- */
+
+        .ambient {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-image {
+            position: absolute;
+            inset: -32px;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            opacity: 0;
+            filter: blur(var(--bg-blur, 0px));
+            transform: scale(1.03);
+            transition: opacity 0.45s ease;
+        }
+
+        .bg-veil {
+            position: absolute;
+            inset: 0;
+            background: var(--bg);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        html[data-bg="image"] .bg-image { opacity: 1; }
+        html[data-bg="image"] .bg-veil { opacity: var(--bg-dim, 0.55); }
+
+        .aurora, .mesh {
+            display: none;
+            position: absolute;
+            inset: 0;
+        }
+
+        html[data-bg="aurora"] .aurora { display: block; }
+        html[data-bg="mesh"] .mesh { display: block; }
+
+        .aurora span {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.42;
+            animation: float 20s ease-in-out infinite alternate;
+        }
+
+        .aurora .a1 {
+            width: 46vw; height: 46vw; left: -12vw; top: -14vw;
+            background: var(--accent);
+            animation-delay: -3s;
+        }
+
+        .aurora .a2 {
+            width: 34vw; height: 34vw; right: -6vw; top: 4vh;
+            background: var(--gemini-via);
+            opacity: 0.2;
+            animation-delay: -9s;
+        }
+
+        .aurora .a3 {
+            width: 38vw; height: 38vw; left: 24vw; bottom: -20vw;
+            background: var(--gemini-from);
+            opacity: 0.16;
+            animation-delay: -15s;
+        }
+
+        .mesh {
+            background:
+                radial-gradient(55% 55% at 16% 18%, var(--accent-soft), transparent 72%),
+                radial-gradient(48% 48% at 84% 12%, rgba(160, 51, 255, 0.16), transparent 72%),
+                radial-gradient(60% 60% at 70% 86%, rgba(0, 229, 255, 0.11), transparent 72%),
+                radial-gradient(42% 42% at 30% 82%, rgba(255, 79, 139, 0.08), transparent 72%);
+        }
+
+        @keyframes float {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(4vw, 3vh, 0) scale(1.12); }
+        }
+
+        /* ---------- View routing ---------- */
+
+        .view-panel {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            min-height: 100svh;
+        }
+
+        .view-panel.hidden { display: none !important; }
+
+        .view-panel.view-enter {
+            animation: viewIn 0.34s var(--ease);
+        }
+
+        @keyframes viewIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.996); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* ---------- Home shell ---------- */
+
+        .app-shell {
+            min-height: 100svh;
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 22px var(--page-pad) 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: 44px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 2px;
+            border: 0;
+            background: none;
+            color: var(--text);
+        }
+
+        .brand-mark {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 14px var(--accent-glow);
+            transition: transform 0.25s var(--ease);
+        }
+
+        .brand:hover .brand-mark { transform: scale(1.35); }
+
+        .brand-name {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.28em;
+            color: var(--muted);
+            transition: color 0.18s ease;
+        }
+
+        .brand:hover .brand-name { color: var(--text); }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .clock {
+            padding: 6px 11px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--surface) 66%, transparent);
+            color: var(--muted);
+            font-size: 12.5px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.04em;
+            backdrop-filter: blur(8px);
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--surface) 66%, transparent);
+            color: var(--muted);
+            display: grid;
+            place-items: center;
+            transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease, transform 0.18s var(--ease);
+            backdrop-filter: blur(8px);
+        }
+
+        .icon-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: translateY(-1px);
+        }
+
+        .home-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0 32px;
+        }
+
+        .hero {
+            width: min(100%, 760px);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .hero-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .eyebrow {
+            margin: 0;
+            font-size: clamp(25px, 3.4vw, 35px);
+            font-weight: 650;
+            line-height: 1.16;
+            letter-spacing: -0.025em;
+            background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 58%, var(--muted)));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subline {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 0.02em;
+        }
+
+        .search-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            padding: 1.5px;
+            border-radius: 22px;
+            background: linear-gradient(120deg,
+                color-mix(in srgb, var(--accent) 52%, white),
+                var(--accent) 48%,
+                color-mix(in srgb, var(--accent) 58%, black));
+            box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18);
+            transition: transform 0.18s var(--ease), box-shadow 0.18s ease;
+        }
+
+        html[data-theme="light"] .search-wrapper {
+            box-shadow: 0 10px 28px rgba(31, 35, 40, 0.10);
+        }
+
+        .search-wrapper:focus-within {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 48px var(--accent-soft), 0 0 0 1px var(--accent);
+        }
+
+        .gemini-wrapper {
+            background: linear-gradient(120deg, var(--gemini-from), var(--gemini-via) 52%, var(--gemini-to));
+        }
+
+        .gemini-wrapper:focus-within {
+            box-shadow: 0 16px 48px rgba(160, 51, 255, 0.18), 0 0 0 1px var(--gemini-via);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding: 6px 7px 6px 16px;
+            border-radius: 20.5px;
+            background: var(--surface);
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 0;
+            min-height: 40px;
+            max-height: 300px;
+            padding: 9px 0;
+            border: 0;
+            outline: 0;
+            resize: none;
+            overflow-y: hidden;
+            background: transparent;
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.5;
+            scrollbar-width: thin;
+        }
+
+        .search-input::placeholder { color: var(--muted); opacity: 0.86; }
+
+        .search-btn {
+            flex: none;
+            width: 42px;
+            height: 42px;
+            border: 0;
+            border-radius: 15px;
+            display: grid;
+            place-items: center;
+            background: var(--accent-soft);
+            color: var(--accent);
+            transition: background 0.18s ease, color 0.18s ease, transform 0.18s var(--ease);
+        }
+
+        .search-btn:hover {
+            background: var(--accent);
+            color: var(--accent-ink);
+            transform: translateY(-1px);
+        }
+
+        .search-btn .icon { width: 21px; height: 21px; }
+
+        .gemini-btn {
+            background: linear-gradient(135deg, rgba(27, 161, 226, 0.14), rgba(160, 51, 255, 0.18), rgba(255, 79, 139, 0.14));
+            color: var(--gemini-via);
+        }
+
+        html[data-theme="light"] .gemini-btn { color: #7b2ff7; }
+
+        .gemini-btn:hover {
+            background: linear-gradient(135deg, var(--gemini-from), var(--gemini-via), var(--gemini-to));
+            color: #fff;
+        }
+
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 34px;
+        }
+
+        .quick-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px 6px 6px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--surface) 70%, transparent);
+            color: var(--text);
+            font-size: 12.5px;
+            line-height: 1;
+            backdrop-filter: blur(8px);
+            transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s var(--ease);
+        }
+
+        .quick-chip:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: translateY(-1px);
+        }
+
+        .chip-key {
+            display: grid;
+            place-items: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: lowercase;
+        }
+
+        .chip-label {
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--muted);
+            transition: color 0.18s ease;
+        }
+
+        .quick-chip:hover .chip-label { color: var(--text); }
+
+        .quick-chip.add {
+            padding: 7px 12px;
+            color: var(--muted);
+            border-style: dashed;
+        }
+
+        .quick-chip.add:hover { color: var(--text); }
+
+        .hints {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        .hints span { display: inline-flex; align-items: center; gap: 5px; }
+
+        kbd {
+            display: inline-grid;
+            place-items: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border: 1px solid var(--border);
+            border-bottom-width: 2px;
+            border-radius: 6px;
+            background: var(--surface-2);
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .app-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 6px;
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        .version-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--surface) 66%, transparent);
+            color: var(--muted);
+            font-size: 11.5px;
+            letter-spacing: 0.02em;
+            transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .version-pill:hover {
+            color: var(--text);
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .version-sep { opacity: 0.5; }
+
+        .footer-note {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .footer-sep { opacity: 0.5; }
+
+        .link-btn {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--muted);
+            font-size: inherit;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            transition: color 0.18s ease;
+        }
+
+        .link-btn:hover { color: var(--accent); }
+
+        body.compact .app-shell { padding-top: 14px; }
+        body.compact .hero { max-width: 680px; gap: 14px; }
+        body.compact .search-stack { gap: 10px; }
+        body.compact .eyebrow { font-size: 26px; }
+        body.compact .home-main { padding: 10px 0 20px; }
+
+        /* ---------- Loading overlay ---------- */
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: grid;
+            place-items: center;
+            background: color-mix(in srgb, var(--bg) 34%, transparent);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.16s ease, visibility 0.16s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .w10-spinner { position: relative; width: 50px; height: 50px; }
+
+        .w10-spinner .dot {
+            position: absolute;
+            left: 23px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            transform-origin: 2.5px 25px;
+            opacity: 0;
+            animation: w10-spin 3.5s infinite cubic-bezier(0.05, 0.6, 0.2, 1);
+        }
+
+        .w10-spinner .dot:nth-child(2) { animation-delay: 0.15s; }
+        .w10-spinner .dot:nth-child(3) { animation-delay: 0.3s; }
+        .w10-spinner .dot:nth-child(4) { animation-delay: 0.45s; }
+        .w10-spinner .dot:nth-child(5) { animation-delay: 0.6s; }
+
+        @keyframes w10-spin {
+            0% { transform: rotate(0deg); opacity: 0; }
+            5% { opacity: 1; }
+            70% { transform: rotate(720deg); opacity: 1; }
+            75% { opacity: 0; transform: rotate(720deg); }
+            100% { transform: rotate(720deg); opacity: 0; }
+        }
+
+        /* ---------- Page shell (about + customizer) ---------- */
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100svh;
+            max-width: 1020px;
+            margin: 0 auto;
+            padding: 22px var(--page-pad) 34px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .page-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 42px;
+        }
+
+        .page-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .about-main,
+        .settings-main {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            flex: 1;
+        }
+
+        .about-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 24px 0 8px;
+            text-align: center;
+        }
+
+        .about-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            display: grid;
+            place-items: center;
+            color: var(--accent-ink);
+            font-size: 27px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 40%, var(--gemini-via)));
+            box-shadow: 0 16px 40px var(--accent-soft);
+        }
+
+        .about-kicker {
+            margin: 0;
+            color: var(--accent);
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+        }
+
+        .about-hero h1 {
+            margin: 0;
+            font-size: clamp(30px, 4.8vw, 46px);
+            font-weight: 700;
+            letter-spacing: -0.035em;
+        }
+
+        .about-hero h1 span {
+            margin-left: 6px;
+            color: var(--muted);
+            font-size: 0.43em;
+            font-weight: 600;
+            letter-spacing: 0;
+            vertical-align: middle;
+        }
+
+        .about-sub {
+            max-width: 540px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            min-width: 0;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: color-mix(in srgb, var(--surface) 84%, transparent);
+            box-shadow: 0 12px 30px var(--shadow-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .card-sub {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+
+        .changelog {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 14px 0 0;
+            padding: 0;
+            list-style: none;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
+        .changelog li {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+        }
+
+        .changelog li::before {
+            content: "✓";
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 17px;
+            height: 17px;
+            margin-top: 1px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin: 14px 0;
+        }
+
+        .stat {
+            min-width: 0;
+            padding: 10px 7px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-2);
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            overflow: hidden;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .stat-label {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin: 12px 0;
+            min-height: 28px;
+        }
+
+        .mini-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 11.5px;
+            transition: color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .mini-chip:hover { color: var(--text); border-color: var(--accent); }
+
+        .mini-chip b { color: var(--accent); font-weight: 700; }
+
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .action-stack .btn { width: 100%; justify-content: flex-start; }
+
+        .keymap {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            margin-top: 14px;
+        }
+
+        .keymap-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .keymap-row span:last-child {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .about-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 4px;
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        /* ---------- Buttons ---------- */
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 14px;
+            border: 1px solid transparent;
+            border-radius: 11px;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s var(--ease), opacity 0.18s ease;
+        }
+
+        .btn .icon { width: 16px; height: 16px; }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--accent-ink);
+            box-shadow: 0 8px 20px var(--accent-soft);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            border-color: var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        .btn-danger {
+            border-color: rgba(255, 90, 90, 0.26);
+            background: rgba(255, 90, 90, 0.10);
+            color: #ff8a8a;
+        }
+
+        .btn-danger:hover { background: rgba(255, 90, 90, 0.18); }
+
+        html[data-theme="light"] .btn-danger { color: #c5221f; }
+
+        .btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ---------- Settings ---------- */
+
+        .settings-head h1 {
+            margin: 4px 0 8px;
+            font-size: clamp(28px, 4.4vw, 40px);
+            font-weight: 700;
+            letter-spacing: -0.035em;
+        }
+
+        .settings-head p:last-child {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--surface) 78%, transparent);
+            overflow-x: auto;
+            scrollbar-width: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .tab {
+            flex: 1;
+            min-width: 108px;
+            padding: 9px 13px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .tab:hover { color: var(--text); }
+
+        .tab.active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            box-shadow: 0 6px 18px var(--accent-soft);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeUp 0.24s ease; }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            align-items: start;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .theme-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 7px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: left;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+        }
+
+        .theme-card:hover { border-color: var(--accent); }
+
+        .theme-card.active {
+            border-color: var(--accent);
+            color: var(--text);
+            box-shadow: 0 0 0 1px var(--accent), 0 8px 20px var(--accent-soft);
+        }
+
+        .theme-swatch {
+            position: relative;
+            display: block;
+            height: 34px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .theme-swatch::after {
+            content: "";
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--swatch-accent, var(--accent));
+            box-shadow: 0 0 10px var(--swatch-accent, var(--accent));
+        }
+
+        .theme-name {
+            display: block;
+            padding: 0 2px 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 14px;
+        }
+
+        .field > label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .field .hint {
+            color: var(--muted);
+            font-size: 11.5px;
+            line-height: 1.5;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
+            background: var(--surface-2);
+            color: var(--text);
+            font-size: 13px;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .input::placeholder { color: var(--muted); opacity: 0.7; }
+
+        .input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+        }
+
+        select.input {
+            appearance: none;
+            padding-right: 34px;
+            background-image:
+                linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+            background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+        }
+
+        input[type="color"] {
+            width: 52px;
+            height: 40px;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface-2);
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        #accentHex { width: 112px; text-transform: lowercase; }
+
+        .toggle-list {
+            display: flex;
+            flex-direction: column;
+            margin-top: 8px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+        }
+
+        .toggle-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+        .toggle-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .toggle-title { font-size: 12.5px; font-weight: 600; }
+        .toggle-desc { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+
+        .switch {
+            position: relative;
+            flex: none;
+            width: 42px;
+            height: 24px;
+        }
+
+        .switch input {
+            position: absolute;
+            inset: 0;
+            margin: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .switch-track {
+            position: absolute;
+            inset: 0;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface-3);
+            transition: background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .switch-track::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.18s var(--ease);
+        }
+
+        .switch input:checked + .switch-track {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+
+        .switch input:checked + .switch-track::after { transform: translateX(18px); }
+
+        .switch input:focus-visible + .switch-track {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .shortcut-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .sc-form {
+            display: grid;
+            grid-template-columns: minmax(86px, 0.8fr) minmax(150px, 1.6fr) auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .sc-row {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 9px;
+            align-items: center;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-2);
+        }
+
+        .sc-key {
+            min-width: 36px;
+            padding: 4px 7px;
+            border-radius: 8px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 11.5px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .sc-url {
+            min-width: 0;
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 11.5px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sc-actions { display: flex; gap: 3px; }
+
+        .mini-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            display: grid;
+            place-items: center;
+            transition: background 0.18s ease, color 0.18s ease;
+        }
+
+        .mini-btn .icon { width: 15px; height: 15px; }
+
+        .mini-btn:hover {
+            background: var(--surface-3);
+            color: var(--text);
+        }
+
+        .mini-btn.danger:hover {
+            background: rgba(255, 90, 90, 0.12);
+            color: #ff8a8a;
+        }
+
+        .empty-state {
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .settings-actions {
+            position: sticky;
+            bottom: 10px;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--surface) 88%, transparent);
+            box-shadow: 0 12px 30px var(--shadow-color);
+            backdrop-filter: blur(12px);
+        }
+
+        .settings-actions-left,
+        .settings-actions-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .dirty-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .dirty-indicator.visible { display: inline-flex; }
+
+        .dirty-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .info-box {
+            margin-top: 12px;
+            padding: 11px 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 11.5px;
+            line-height: 1.55;
+        }
+
+        .info-box strong { color: var(--text); font-weight: 600; }
+
+        .data-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .data-actions .btn { flex: 1 1 150px; }
+
+        /* ---------- Modal ---------- */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.18s ease, visibility 0.18s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-box {
+            position: relative;
+            width: min(100%, 520px);
+            max-height: calc(100svh - 40px);
+            overflow: auto;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: var(--surface);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+            transform: translateY(10px) scale(0.98);
+            transition: transform 0.2s var(--ease);
+        }
+
+        .modal-overlay.active .modal-box { transform: none; }
+
+        .modal-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+
+        .modal-x {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+        }
+
+        .modal-text {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 16px;
+        }
+
+        .modal-field span { font-size: 12px; font-weight: 600; }
+
+        .modal-textarea {
+            min-height: 160px;
+            resize: vertical;
+            font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+            font-size: 11.5px;
+            line-height: 1.55;
+        }
+
+        .modal-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+        }
+
+        .modal-spacer { margin-right: auto; }
+
+        /* ---------- Toasts ---------- */
+
+        .toast-region {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: min(92vw, 540px);
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            max-width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            box-shadow: 0 14px 40px var(--shadow-color);
+            color: var(--text);
+            font-size: 12.5px;
+            line-height: 1.4;
+            pointer-events: auto;
+            animation: toastIn 0.25s var(--ease);
+        }
+
+        .toast::before {
+            content: "";
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .toast.success::before { background: #34d399; }
+        .toast.error::before { background: #ff6b6b; }
+        .toast.warning::before { background: #fbbf24; }
+
+        .toast.leaving { animation: toastOut 0.2s ease forwards; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateY(6px) scale(0.98); }
+        }
+
+        /* ---------- Responsive / motion ---------- */
+
+        @media (max-width: 680px) {
+            .app-shell { padding: 16px 16px 14px; }
+            .home-main { align-items: flex-start; padding: 10vh 0 26px; }
+            .hero { gap: 18px; }
+            .eyebrow { font-size: 26px; }
+            .hints { display: none; }
+            .app-footer { justify-content: center; }
+            .topbar-right { gap: 8px; }
+            .clock { padding: 5px 9px; font-size: 12px; }
+            .page-shell { padding: 16px 16px 28px; }
+            .about-hero { padding-top: 16px; }
+            .settings-actions { position: static; }
+            .sc-form { grid-template-columns: 1fr; }
+            .sc-form .btn { width: 100%; }
+            .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 430px) {
+            .quick-chip .chip-label { max-width: 108px; }
+            .about-grid { grid-template-columns: 1fr; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .tabs .tab { min-width: 96px; }
+            .stat-value { font-size: 14px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG icon sprite -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5 14.1 9.9 21.5 12l-7.4 2.1L12 21.5l-2.1-7.4L2.5 12l7.4-2.1L12 2.5Z"/></symbol>
+        <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+        <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M4 3h16"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="15" cy="6" r="2"/><circle cx="7" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></symbol>
+        <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 14h.01M18 14h.01M9 14h6"/></symbol>
+    </svg>
+
+    <div class="ambient" aria-hidden="true">
+        <div class="bg-image" id="bgImage"></div>
+        <div class="bg-veil"></div>
+        <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+        <div class="mesh"></div>
+    </div>
+
+    <!-- ============================== HOME ============================== -->
+    <div class="view-panel" id="homeView">
+        <div class="app-shell">
+            <header class="topbar">
+                <button class="brand" id="brandBtn" type="button" aria-label="Engine home">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <span class="brand-name">ENGINE</span>
+                </button>
+                <div class="topbar-right">
+                    <div class="clock" id="clockWrap" aria-hidden="true">
+                        <span id="clockTime">--:--</span>
+                    </div>
+                    <button class="icon-btn" id="settingsBtn" type="button" aria-label="Open Engine Customizer" title="Customize (Ctrl+,)">
+                        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="home-main">
+                <div class="hero">
+                    <div class="hero-copy" id="heroCopy">
+                        <p class="eyebrow" id="greeting">Good evening, Max.</p>
+                        <p class="subline" id="dateLine">Wednesday, 28 October</p>
+                    </div>
+
+                    <div class="search-stack">
+                        <form class="search-wrapper google-wrapper" id="searchForm" role="search" autocomplete="off">
+                            <div class="search-box">
+                                <textarea id="searchInput" class="search-input" rows="1" placeholder="Search Google..." aria-label="Search the web" spellcheck="false" enterkeyhint="search"></textarea>
+                                <button class="search-btn" type="submit" aria-label="Search" title="Search">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="search-wrapper gemini-wrapper" id="geminiWrapper">
+                            <div class="search-box">
+                                <textarea id="geminiInput" class="search-input" rows="1" placeholder="Ask Gemini..." aria-label="Ask Gemini" spellcheck="false" enterkeyhint="send"></textarea>
+                                <button class="search-btn gemini-btn" id="geminiBtn" type="button" aria-label="Open Gemini and copy prompt" title="Open Gemini">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-sparkle"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quick-links" id="quickLinks" aria-label="Shortcuts"></div>
+
+                    <div class="hints" id="homeHints">
+                        <span><kbd>Enter</kbd> search</span>
+                        <span><kbd>Shift</kbd> + <kbd>Enter</kbd> new line</span>
+                        <span><kbd>Ctrl</kbd> + <kbd>,</kbd> customize</span>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="app-footer">
+                <button class="version-pill" id="versionBadge" type="button" aria-label="About Engine">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    v2.4 <span class="version-sep">·</span> Aurora
+                </button>
+                <div class="footer-note">
+                    <span>Made by Max</span>
+                    <span class="footer-sep">·</span>
+                    <button class="link-btn" id="footerCustomize" type="button">Customize</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- ============================== ABOUT / VERSION ============================== -->
+    <div class="view-panel hidden" id="versionView">
+        <div class="page-shell">
+            <header class="page-topbar">
+                <button class="btn btn-ghost" id="versionBackBtn" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    Engine
+                </button>
+                <div class="page-topbar-actions">
+                    <button class="icon-btn" id="versionSettingsBtn" type="button" aria-label="Open Engine Customizer" title="Customize">
+                        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="about-main">
+                <section class="about-hero">
+                    <div class="about-logo" aria-hidden="true">E</div>
+                    <p class="about-kicker">Made by Max</p>
+                    <h1>Engine <span>v2.4.0</span></h1>
+                    <p class="about-sub">The Aurora update. A startpage that finally knows what it is doing — themes, shortcuts, backups and a customizer that actually customizes.</p>
+                </section>
+
+                <div class="about-grid">
+                    <section class="card">
+                        <h2>What's new</h2>
+                        <ul class="changelog">
+                            <li>The Engine Customizer is finished — no more placeholder screen.</li>
+                            <li>Five themes, live accent colours and aurora, mesh, solid or image backgrounds.</li>
+                            <li>Google, DuckDuckGo, Bing, Brave, Startpage or your own search URL.</li>
+                            <li>Shortcuts got a real editor: add, rename, delete and quick-launch.</li>
+                            <li>v2.3 settings migrate automatically, including shortcuts and input heights.</li>
+                            <li>Export, import and reset controls, plus safer clipboard handling for Gemini.</li>
+                            <li>Accessible dialogs, focus management, reduced-motion support and keyboard shortcuts.</li>
+                        </ul>
+                    </section>
+
+                    <section class="card">
+                        <h2>Your setup</h2>
+                        <div class="stat-grid">
+                            <div class="stat">
+                                <span class="stat-value" id="versionShortcutCount">0</span>
+                                <span class="stat-label">Shortcuts</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="versionThemeName">Midnight</span>
+                                <span class="stat-label">Theme</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="versionSavedAt">—</span>
+                                <span class="stat-label">Saved</span>
+                            </div>
+                        </div>
+                        <div class="chip-row" id="versionChips"></div>
+                        <button class="btn btn-secondary" id="manageShortcutsBtn" type="button">
+                            <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg>
+                            Manage shortcuts
+                        </button>
+                    </section>
+
+                    <section class="card">
+                        <h2>Quick actions</h2>
+                        <p class="card-sub">The useful bits, one click away.</p>
+                        <div class="action-stack">
+                            <button class="btn btn-primary" id="aboutCustomize" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                                Open Engine Customizer
+                            </button>
+                            <button class="btn btn-secondary" id="aboutExport" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                                Export config
+                            </button>
+                            <button class="btn btn-secondary" id="aboutCopy" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+                                Copy config JSON
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <h2>Keyboard</h2>
+                        <div class="keymap">
+                            <div class="keymap-row"><span>Search</span><span><kbd>Enter</kbd></span></div>
+                            <div class="keymap-row"><span>New line</span><span><kbd>Shift</kbd><kbd>Enter</kbd></span></div>
+                            <div class="keymap-row"><span>Focus search</span><span><kbd>/</kbd></span></div>
+                            <div class="keymap-row"><span>Customize</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+                            <div class="keymap-row"><span>Save design</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+                            <div class="keymap-row"><span>Close / back</span><span><kbd>Esc</kbd></span></div>
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="about-footer">
+                    <span>Engine v2.4.0 · Aurora · Made by Max</span>
+                    <button class="btn btn-primary" id="aboutHomeBtn" type="button">
+                        Back Home
+                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    </button>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================== CUSTOMIZER ============================== -->
+    <div class="view-panel hidden" id="editView">
+        <div class="page-shell settings-shell">
+            <header class="page-topbar">
+                <button class="btn btn-ghost" id="editorBackBtn" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    Engine
+                </button>
+                <div class="page-topbar-actions">
+                    <span class="dirty-indicator" id="dirtyIndicator">
+                        <span class="dirty-dot" aria-hidden="true"></span>
+                        Unsaved
+                    </span>
+                    <button class="btn btn-primary" id="topSaveBtn" type="button" disabled>Save</button>
+                </div>
+            </header>
+
+            <main class="settings-main">
+                <div class="settings-head">
+                    <p class="about-kicker">Engine Customizer</p>
+                    <h1>Make it yours.</h1>
+                    <p>Changes preview live. Nothing is written until you save.</p>
+                </div>
+
+                <nav class="tabs" role="tablist" aria-label="Customizer sections">
+                    <button class="tab active" id="tabBtnAppearance" type="button" role="tab" aria-selected="true" aria-controls="tab-appearance" data-tab="appearance" tabindex="0">Appearance</button>
+                    <button class="tab" id="tabBtnSearch" type="button" role="tab" aria-selected="false" aria-controls="tab-search" data-tab="search" tabindex="-1">Search &amp; shortcuts</button>
+                    <button class="tab" id="tabBtnBehaviour" type="button" role="tab" aria-selected="false" aria-controls="tab-behaviour" data-tab="behaviour" tabindex="-1">Behaviour</button>
+                    <button class="tab" id="tabBtnData" type="button" role="tab" aria-selected="false" aria-controls="tab-data" data-tab="data" tabindex="-1">Data &amp; backup</button>
+                </nav>
+
+                <section class="tab-panel active" id="tab-appearance" role="tabpanel" aria-labelledby="tabBtnAppearance">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Theme</h2>
+                            <p class="card-sub">Pick a base palette. The accent colour is yours to bend.</p>
+                            <div class="theme-grid" id="themeGrid"></div>
+                            <div class="field">
+                                <label for="accentColor">Accent colour</label>
+                                <div class="field-row">
+                                    <input type="color" id="accentColor" data-config="accent" aria-label="Accent colour">
+                                    <input type="text" id="accentHex" class="input mono" maxlength="7" aria-label="Accent colour hex code" spellcheck="false">
+                                    <button class="btn btn-ghost" id="resetAccentBtn" type="button">Theme accent</button>
+                                </div>
+                                <span class="hint">Used for the search ring, buttons, switches and little glowing things.</span>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Background</h2>
+                            <p class="card-sub">Aurora drifts. Mesh sits still. Image gets out of the way.</p>
+                            <div class="field">
+                                <label for="bgStyle">Background style</label>
+                                <select id="bgStyle" class="input" data-config="background">
+                                    <option value="aurora">Aurora (animated)</option>
+                                    <option value="mesh">Mesh gradient</option>
+                                    <option value="solid">Solid theme colour</option>
+                                    <option value="image">Custom image</option>
+                                </select>
+                            </div>
+                            <div id="imageBgFields" class="hidden">
+                                <div class="field">
+                                    <label for="bgUrl">Image URL</label>
+                                    <input type="text" id="bgUrl" class="input" data-config="customBackgroundUrl" placeholder="https://example.com/wallpaper.jpg" spellcheck="false">
+                                    <span class="hint">HTTPS, HTTP, data:image or a local file path. The image is loaded when the page opens.</span>
+                                </div>
+                                <div class="field">
+                                    <label for="bgDim">Dim overlay <span class="hint" id="dimValue">55%</span></label>
+                                    <input type="range" id="bgDim" data-config="backgroundDim" min="0" max="90" step="1" value="55">
+                                </div>
+                                <div class="field">
+                                    <label for="bgBlur">Image blur <span class="hint" id="blurValue">0px</span></label>
+                                    <input type="range" id="bgBlur" data-config="backgroundBlur" min="0" max="24" step="1" value="0">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Home screen</h2>
+                            <p class="card-sub">Keep the useful bits and hide the rest.</p>
+                            <div class="field">
+                                <label for="userName">Your name</label>
+                                <input type="text" id="userName" class="input" data-config="userName" maxlength="24" placeholder="Max" autocomplete="off">
+                                <span class="hint">Used in the greeting. Leave it empty for a plain hello.</span>
+                            </div>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show clock</span>
+                                        <span class="toggle-desc">A small time pill in the top bar.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showClock" aria-label="Show clock">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">24-hour clock</span>
+                                        <span class="toggle-desc">Switch from 12-hour to 24-hour time.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="clock24h" aria-label="Use 24-hour clock">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show greeting</span>
+                                        <span class="toggle-desc">The greeting and date above the search bars.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGreeting" aria-label="Show greeting">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show shortcut chips</span>
+                                        <span class="toggle-desc">Quick-launch pills under the search bars.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showShortcutChips" aria-label="Show shortcut chips">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Compact layout</span>
+                                        <span class="toggle-desc">Pull everything a little closer together.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="compact" aria-label="Use compact layout">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-search" role="tabpanel" aria-labelledby="tabBtnSearch">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Search engine</h2>
+                            <p class="card-sub">Where the top bar sends your query.</p>
+                            <div class="field">
+                                <label for="searchEngine">Default engine</label>
+                                <select id="searchEngine" class="input" data-config="searchEngine">
+                                    <option value="google">Google</option>
+                                    <option value="duckduckgo">DuckDuckGo</option>
+                                    <option value="bing">Bing</option>
+                                    <option value="brave">Brave Search</option>
+                                    <option value="startpage">Startpage</option>
+                                    <option value="custom">Custom URL</option>
+                                </select>
+                            </div>
+                            <div id="customSearchFields" class="hidden">
+                                <div class="field">
+                                    <label for="customSearchUrl">Custom search URL</label>
+                                    <input type="text" id="customSearchUrl" class="input mono" data-config="customSearchUrl" placeholder="https://example.com/search?q={query}" spellcheck="false">
+                                    <span class="hint">Use <strong>{query}</strong> where the search term should go. <strong>%s</strong> also works.</span>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="googlePlaceholder">Google bar placeholder</label>
+                                <input type="text" id="googlePlaceholder" class="input" data-config="googlePlaceholder" maxlength="60" placeholder="Search Google...">
+                            </div>
+                            <div class="field">
+                                <label for="geminiPlaceholder">Gemini bar placeholder</label>
+                                <input type="text" id="geminiPlaceholder" class="input" data-config="geminiPlaceholder" maxlength="60" placeholder="Ask Gemini...">
+                            </div>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show Google bar</span>
+                                        <span class="toggle-desc">The main search field.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGoogle" aria-label="Show Google search bar">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show Gemini bar</span>
+                                        <span class="toggle-desc">The prompt field with the sparkle button.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGemini" aria-label="Show Gemini bar">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Open searches in a new tab</span>
+                                        <span class="toggle-desc">Keep Engine open when you search.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="openSearchInNewTab" aria-label="Open searches in a new tab">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Copy Gemini prompts</span>
+                                        <span class="toggle-desc">Copy the text, open Gemini, then clear the bar.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="copyGeminiPrompt" aria-label="Copy Gemini prompts to the clipboard">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Shortcuts</h2>
+                            <p class="card-sub">Type a trigger in either bar and press Enter. Shortcuts always open in a new tab.</p>
+                            <div class="shortcut-editor">
+                                <div class="sc-form">
+                                    <input type="text" id="scTriggerInput" class="input" maxlength="24" placeholder="e.g. yt" aria-label="Shortcut trigger" spellcheck="false" autocomplete="off">
+                                    <input type="text" id="scUrlInput" class="input" placeholder="https://youtube.com" aria-label="Shortcut URL" spellcheck="false" autocomplete="off">
+                                    <button class="btn btn-primary" id="scSaveBtn" type="button">Add</button>
+                                </div>
+                                <div class="sc-list" id="shortcutEditorList"></div>
+                                <div class="field-row">
+                                    <span class="hint"><span id="shortcutCountLabel">0</span> saved · triggers are 1–24 characters, lower-case by default.</span>
+                                    <button class="btn btn-ghost hidden" id="scCancelBtn" type="button">Cancel edit</button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-behaviour" role="tabpanel" aria-labelledby="tabBtnBehaviour">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Startup &amp; memory</h2>
+                            <p class="card-sub">How Engine behaves when it wakes up.</p>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Autofocus search</span>
+                                        <span class="toggle-desc">Put the cursor in the search bar on load (desktop pointers only).</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="autofocus" aria-label="Autofocus search on load">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Save drafts</span>
+                                        <span class="toggle-desc">Remember unfinished search and Gemini text between visits.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="saveDrafts" aria-label="Save drafts">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="info-box" style="margin-top:16px;">
+                                <strong>Tip:</strong> Shift + Enter adds a new line. Enter sends. Shortcuts beat search when the whole query is a trigger.
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Keyboard</h2>
+                            <p class="card-sub">Built for people who hate reaching for the mouse.</p>
+                            <div class="keymap">
+                                <div class="keymap-row"><span>Focus search</span><span><kbd>/</kbd></span></div>
+                                <div class="keymap-row"><span>Open customizer</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+                                <div class="keymap-row"><span>Save design (in customizer)</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+                                <div class="keymap-row"><span>Close dialog / leave view</span><span><kbd>Esc</kbd></span></div>
+                                <div class="keymap-row"><span>New line in a bar</span><span><kbd>Shift</kbd><kbd>Enter</kbd></span></div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Good to know</h2>
+                            <p class="card-sub">Small facts that save future-you a headache.</p>
+                            <div class="keymap">
+                                <div class="keymap-row"><span>Storage</span><span>This browser, on this device</span></div>
+                                <div class="keymap-row"><span>Config namespace</span><span class="mono">sp2:config</span></div>
+                                <div class="keymap-row"><span>Old shortcuts key</span><span class="mono">engineShortcuts</span></div>
+                                <div class="keymap-row"><span>Word from the author</span><span>Max</span></div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-data" role="tabpanel" aria-labelledby="tabBtnData">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Backup</h2>
+                            <p class="card-sub">Everything lives in one JSON object. Take it with you.</p>
+                            <div class="data-actions">
+                                <button class="btn btn-primary" id="exportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                                    Export file
+                                </button>
+                                <button class="btn btn-secondary" id="copyConfigBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+                                    Copy JSON
+                                </button>
+                                <button class="btn btn-secondary" id="importFileBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+                                    Import file
+                                </button>
+                                <button class="btn btn-secondary" id="pasteImportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>
+                                    Import text
+                                </button>
+                            </div>
+                            <input type="file" id="importFileInput" accept="application/json,.json" hidden>
+                            <div class="info-box">
+                                <strong>Last saved:</strong> <span id="lastSavedLabel">Not saved yet</span><br>
+                                <strong>Config size:</strong> <span id="configSizeLabel">0 KB</span>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>v2.3 legacy settings</h2>
+                            <p class="card-sub">The old page kept its data in separate keys. Engine reads them automatically on first run, and you can pull them in again here.</p>
+                            <div class="info-box" id="legacyStatus">Checking for old settings…</div>
+                            <div class="data-actions">
+                                <button class="btn btn-secondary" id="legacyImportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>
+                                    Import v2.3 settings
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Maintenance</h2>
+                            <p class="card-sub">The clean-up cupboard. Nothing here is reversible.</p>
+                            <div class="data-actions">
+                                <button class="btn btn-secondary" id="clearDraftsBtn" type="button">Clear drafts</button>
+                                <button class="btn btn-secondary" id="resetPrefsBtn" type="button">Reset preferences</button>
+                                <button class="btn btn-danger" id="factoryResetBtn" type="button">Factory reset</button>
+                            </div>
+                            <div class="info-box" id="storageStatus">Checking local storage…</div>
+                        </section>
+                    </div>
+                </section>
+
+                <div class="settings-actions">
+                    <div class="settings-actions-left">
+                        <button class="btn btn-ghost" id="revertBtn" type="button">Revert changes</button>
+                        <span class="dirty-indicator" id="dirtyIndicatorBottom">
+                            <span class="dirty-dot" aria-hidden="true"></span>
+                            Unsaved
+                        </span>
+                    </div>
+                    <div class="settings-actions-right">
+                        <button class="btn btn-secondary" id="bottomSaveBtn" type="button" disabled>Save design</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================== GLOBAL UI ============================== -->
+    <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+        <div class="modal-box" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalText" tabindex="-1">
+            <div class="modal-head">
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <button class="icon-btn modal-x" id="modalCloseBtn" type="button" aria-label="Close dialog">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <p class="modal-text" id="modalText"></p>
+            <label class="modal-field hidden" id="modalField">
+                <span id="modalFieldLabel">Config JSON</span>
+                <textarea class="input modal-textarea" id="modalInput" spellcheck="false"></textarea>
+            </label>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+        <div class="w10-spinner">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
+
+    <script>
+    (() => {
+        "use strict";
+
+        /* ============================================================
+           Constants
+           ============================================================ */
+
+        const APP_VERSION = "2.4.0";
+        const MAX_SHORTCUTS = 40;
+
+        const STORAGE_KEYS = {
+            config: "sp2:config",
+            drafts: "sp2:drafts",
+            heights: "sp2:heights",
+            lastSaved: "sp2:lastSaved"
+        };
+
+        const LEGACY_KEYS = {
+            shortcuts: "engineShortcuts",
+            geminiDraft: "backupGeminiText",
+            googleHeight: "googleInputHeight",
+            geminiHeight: "geminiInputHeight"
+        };
+
+        const LEGACY_FALLBACK_SHORTCUTS = Object.freeze({
+            m: "https://myinstants.com",
+            y: "https://YouTube.com"
+        });
+
+        const THEMES = {
+            midnight: { name: "Midnight", accent: "#8ab4f8", meta: "#131314", swatch: ["#131314", "#1e1f20"] },
+            amoled: { name: "AMOLED", accent: "#8ab4f8", meta: "#000000", swatch: ["#000000", "#0d0d0d"] },
+            slate: { name: "Slate", accent: "#7aa2ff", meta: "#0b1220", swatch: ["#0b1220", "#141d2e"] },
+            ocean: { name: "Ocean", accent: "#4dd0e1", meta: "#061a20", swatch: ["#061a20", "#0c2831"] },
+            light: { name: "Daylight", accent: "#1a73e8", meta: "#f4f6fb", swatch: ["#f4f6fb", "#ffffff"] }
+        };
+
+        const SEARCH_ENGINES = {
+            google: { name: "Google", url: "https://www.google.com/search?q={query}" },
+            duckduckgo: { name: "DuckDuckGo", url: "https://duckduckgo.com/?q={query}" },
+            bing: { name: "Bing", url: "https://www.bing.com/search?q={query}" },
+            brave: { name: "Brave Search", url: "https://search.brave.com/search?q={query}" },
+            startpage: { name: "Startpage", url: "https://www.startpage.com/sp/search?query={query}" },
+            custom: { name: "Custom URL", url: "" }
+        };
+
+        const DEFAULT_CONFIG = {
+            configVersion: 2,
+            theme: "midnight",
+            accent: "#8ab4f8",
+            background: "aurora",
+            customBackgroundUrl: "",
+            backgroundDim: 55,
+            backgroundBlur: 0,
+            compact: false,
+            showClock: true,
+            clock24h: false,
+            showGreeting: true,
+            userName: "Max",
+            showShortcutChips: true,
+            showGoogle: true,
+            showGemini: true,
+            searchEngine: "google",
+            customSearchUrl: "https://www.google.com/search?q={query}",
+            googlePlaceholder: "Search Google...",
+            geminiPlaceholder: "Ask Gemini...",
+            openSearchInNewTab: false,
+            copyGeminiPrompt: true,
+            saveDrafts: true,
+            autofocus: true,
+            shortcuts: {}
+        };
+
+        /* ============================================================
+           Small utilities
+           ============================================================ */
+
+        const $id = (id) => document.getElementById(id);
+        const $all = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+        const clone = (value) => {
+            if (typeof structuredClone === "function") {
+                try { return structuredClone(value); } catch {}
+            }
+            return JSON.parse(JSON.stringify(value));
+        };
+
+        const isPlainObject = (value) =>
+            value !== null && typeof value === "object" && !Array.isArray(value);
+
+        const safeParse = (raw, fallback = null) => {
+            if (typeof raw !== "string" || !raw) return fallback;
+            try { return JSON.parse(raw); } catch { return fallback; }
+        };
+
+        const canonical = (value) => {
+            if (Array.isArray(value)) return value.map(canonical);
+            if (isPlainObject(value)) {
+                const out = {};
+                Object.keys(value).sort().forEach((key) => { out[key] = canonical(value[key]); });
+                return out;
+            }
+            return value;
+        };
+
+        const clampInt = (value, min, max, fallback) => {
+            const number = Number(value);
+            if (!Number.isFinite(number)) return fallback;
+            return Math.min(max, Math.max(min, Math.round(number)));
+        };
+
+        const cleanText = (value, maxLength, fallback = "") => {
+            if (typeof value !== "string") return fallback;
+            return value.trim().slice(0, maxLength) || fallback;
+        };
+
+        const normalizeHex = (value, fallback = "#8ab4f8") => {
+            let text = String(value || "").trim();
+            if (!text) return fallback;
+            if (!text.startsWith("#")) text = "#" + text;
+            if (/^#[0-9a-f]{3}$/i.test(text)) {
+                text = "#" + text[1] + text[1] + text[2] + text[2] + text[3] + text[3];
+            }
+            if (!/^#[0-9a-f]{6}$/i.test(text)) return fallback;
+            return text.toLowerCase();
+        };
+
+        const hexToRgb = (hex) => {
+            const clean = normalizeHex(hex, "#8ab4f8").slice(1);
+            return {
+                r: parseInt(clean.slice(0, 2), 16),
+                g: parseInt(clean.slice(2, 4), 16),
+                b: parseInt(clean.slice(4, 6), 16)
+            };
+        };
+
+        const relativeLuminance = ({ r, g, b }) => {
+            const channel = (value) => {
+                const v = value / 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+        };
+
+        const contrastRatio = (first, second) => {
+            const a = relativeLuminance(first);
+            const b = relativeLuminance(second);
+            return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        };
+
+        const mixHex = (hex, target, amount) => {
+            const from = hexToRgb(hex);
+            const to = hexToRgb(target);
+            const mix = (a, b) => Math.round(a + (b - a) * amount);
+            return "#" + [mix(from.r, to.r), mix(from.g, to.g), mix(from.b, to.b)]
+                .map((value) => value.toString(16).padStart(2, "0"))
+                .join("");
+        };
+
+        const parseHeight = (value) => {
+            const number = parseFloat(String(value || "").replace("px", ""));
+            if (!Number.isFinite(number)) return null;
+            return Math.min(300, Math.max(40, Math.round(number)));
+        };
+
+        const normalizeTrigger = (value) => {
+            const trigger = String(value || "").trim().toLowerCase();
+            if (!/^[a-z0-9!@#$%^&*_+.\-]{1,24}$/.test(trigger)) return null;
+            return trigger;
+        };
+
+        const normalizeUrl = (value) => {
+            let text = String(value || "").trim();
+            if (!text) return null;
+            if (!/^[a-z][a-z0-9+.-]*:/i.test(text)) text = "https://" + text;
+            try {
+                const url = new URL(text);
+                if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+                return url.href;
+            } catch {
+                return null;
+            }
+        };
+
+        const normalizeSearchUrl = (value) => {
+            let text = String(value || "").trim();
+            if (!text) return null;
+            if (!/^[a-z][a-z0-9+.-]*:/i.test(text)) text = "https://" + text;
+            text = text.replace(/%s/g, "{query}");
+            if (!text.includes("{query}")) return null;
+            try {
+                new URL(text.replace(/\{query\}/g, "engine-test"));
+                if (!/^https?:\/\//i.test(text)) return null;
+                return text;
+            } catch {
+                return null;
+            }
+        };
+
+        const normalizeImageUrl = (value) => {
+            const text = String(value || "").trim();
+            if (!text) return "";
+            if (/^data:image\/(png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=\s]+$/i.test(text)) {
+                return text;
+            }
+            try {
+                const url = new URL(text, window.location.href);
+                const allowed = url.protocol === "https:" || url.protocol === "http:" ||
+                    (window.location.protocol === "file:" && url.protocol === "file:");
+                return allowed ? url.href : "";
+            } catch {
+                return "";
+            }
+        };
+
+        const normalizeShortcuts = (value) => {
+            const out = {};
+            if (!isPlainObject(value)) return out;
+            for (const [rawTrigger, rawUrl] of Object.entries(value)) {
+                if (Object.keys(out).length >= MAX_SHORTCUTS) break;
+                const trigger = normalizeTrigger(rawTrigger);
+                const url = normalizeUrl(rawUrl);
+                if (trigger && url) out[trigger] = url;
+            }
+            return out;
+        };
+
+        const prettyHost = (value) => {
+            try {
+                return new URL(value).hostname.replace(/^www\./i, "") || value;
+            } catch {
+                return value;
+            }
+        };
+
+        const normalizeConfig = (input) => {
+            const source = isPlainObject(input) ? input : {};
+            const theme = Object.prototype.hasOwnProperty.call(THEMES, source.theme)
+                ? source.theme
+                : DEFAULT_CONFIG.theme;
+            const background = ["aurora", "mesh", "solid", "image"].includes(source.background)
+                ? source.background
+                : DEFAULT_CONFIG.background;
+
+            return {
+                configVersion: 2,
+                theme,
+                accent: normalizeHex(source.accent, THEMES[theme].accent),
+                background,
+                customBackgroundUrl: normalizeImageUrl(source.customBackgroundUrl),
+                backgroundDim: clampInt(source.backgroundDim, 0, 90, DEFAULT_CONFIG.backgroundDim),
+                backgroundBlur: clampInt(source.backgroundBlur, 0, 24, DEFAULT_CONFIG.backgroundBlur),
+                compact: Boolean(source.compact),
+                showClock: source.showClock !== false,
+                clock24h: Boolean(source.clock24h),
+                showGreeting: source.showGreeting !== false,
+                userName: cleanText(source.userName, 24, ""),
+                showShortcutChips: source.showShortcutChips !== false,
+                showGoogle: source.showGoogle !== false,
+                showGemini: source.showGemini !== false,
+                searchEngine: Object.prototype.hasOwnProperty.call(SEARCH_ENGINES, source.searchEngine)
+                    ? source.searchEngine
+                    : DEFAULT_CONFIG.searchEngine,
+                customSearchUrl: normalizeSearchUrl(source.customSearchUrl) || DEFAULT_CONFIG.customSearchUrl,
+                googlePlaceholder: cleanText(source.googlePlaceholder, 60, DEFAULT_CONFIG.googlePlaceholder),
+                geminiPlaceholder: cleanText(source.geminiPlaceholder, 60, DEFAULT_CONFIG.geminiPlaceholder),
+                openSearchInNewTab: Boolean(source.openSearchInNewTab),
+                copyGeminiPrompt: source.copyGeminiPrompt !== false,
+                saveDrafts: source.saveDrafts !== false,
+                autofocus: source.autofocus !== false,
+                shortcuts: normalizeShortcuts(source.shortcuts)
+            };
+        };
+
+        /* ============================================================
+           Storage
+           ============================================================ */
+
+        const storage = {
+            get(key) {
+                try { return window.localStorage.getItem(key); } catch { return null; }
+            },
+            set(key, value) {
+                try {
+                    window.localStorage.setItem(key, value);
+                    return true;
+                } catch {
+                    return false;
+                }
+            },
+            remove(key) {
+                try { window.localStorage.removeItem(key); } catch {}
+            },
+            test() {
+                const key = "sp2:test";
+                try {
+                    window.localStorage.setItem(key, "1");
+                    window.localStorage.removeItem(key);
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+        };
+
+        const readLegacyShortcuts = () => {
+            const parsed = safeParse(storage.get(LEGACY_KEYS.shortcuts), null);
+            const shortcuts = normalizeShortcuts(parsed);
+            return { shortcuts, count: Object.keys(shortcuts).length };
+        };
+
+        const loadInitialConfig = () => {
+            const stored = storage.get(STORAGE_KEYS.config);
+            if (stored) {
+                return {
+                    config: normalizeConfig(safeParse(stored, null)),
+                    migrated: false,
+                    legacyCount: 0
+                };
+            }
+
+            let alternate = null;
+            for (const key of ["startpageConfig", "engineConfig", "startpageEngineConfig"]) {
+                const raw = storage.get(key);
+                if (!raw) continue;
+                const parsed = safeParse(raw, null);
+                if (isPlainObject(parsed)) { alternate = parsed; break; }
+            }
+
+            const legacy = readLegacyShortcuts();
+
+            if (alternate) {
+                const merged = normalizeConfig(alternate);
+                for (const [trigger, url] of Object.entries(legacy.shortcuts)) {
+                    if (!Object.prototype.hasOwnProperty.call(merged.shortcuts, trigger)) {
+                        merged.shortcuts[trigger] = url;
+                    }
+                }
+                storage.set(STORAGE_KEYS.config, JSON.stringify(merged));
+                return { config: merged, migrated: legacy.count > 0, legacyCount: legacy.count };
+            }
+
+            if (legacy.count > 0) {
+                const config = normalizeConfig({ ...DEFAULT_CONFIG, shortcuts: legacy.shortcuts });
+                storage.set(STORAGE_KEYS.config, JSON.stringify(config));
+                return { config, migrated: true, legacyCount: legacy.count };
+            }
+
+            return {
+                config: normalizeConfig({ ...DEFAULT_CONFIG, shortcuts: { ...LEGACY_FALLBACK_SHORTCUTS } }),
+                migrated: false,
+                legacyCount: 0
+            };
+        };
+
+        const loadHeights = () => {
+            const stored = safeParse(storage.get(STORAGE_KEYS.heights), null);
+            const google = parseHeight(stored && stored.google) ??
+                parseHeight(storage.get(LEGACY_KEYS.googleHeight)) ?? 40;
+            const gemini = parseHeight(stored && stored.gemini) ??
+                parseHeight(storage.get(LEGACY_KEYS.geminiHeight)) ?? 40;
+            return { google, gemini };
+        };
+
+        const loadDrafts = () => {
+            const stored = safeParse(storage.get(STORAGE_KEYS.drafts), null);
+            const googleDraft = isPlainObject(stored) && typeof stored.google === "string"
+                ? stored.google
+                : "";
+            const geminiDraft = isPlainObject(stored) && typeof stored.gemini === "string"
+                ? stored.gemini
+                : (storage.get(LEGACY_KEYS.geminiDraft) || "");
+            return { google: googleDraft, gemini: geminiDraft };
+        };
+
+        const formatSavedAt = (iso) => {
+            if (!iso) return "Not yet";
+            const date = new Date(iso);
+            if (Number.isNaN(date.getTime())) return "Unknown";
+            try {
+                return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(date);
+            } catch {
+                return date.toLocaleDateString();
+            }
+        };
+
+        const formatBytes = (bytes) => {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+        };
+
+        /* ============================================================
+           DOM references
+           ============================================================ */
+
+        const dom = {
+            homeView: $id("homeView"),
+            versionView: $id("versionView"),
+            editView: $id("editView"),
+
+            searchForm: $id("searchForm"),
+            searchInput: $id("searchInput"),
+            geminiWrapper: $id("geminiWrapper"),
+            geminiInput: $id("geminiInput"),
+            geminiBtn: $id("geminiBtn"),
+            quickLinks: $id("quickLinks"),
+            heroCopy: $id("heroCopy"),
+            greeting: $id("greeting"),
+            dateLine: $id("dateLine"),
+            clockWrap: $id("clockWrap"),
+            clockTime: $id("clockTime"),
+
+            settingsBtn: $id("settingsBtn"),
+            brandBtn: $id("brandBtn"),
+            versionBadge: $id("versionBadge"),
+            footerCustomize: $id("footerCustomize"),
+
+            versionBackBtn: $id("versionBackBtn"),
+            versionSettingsBtn: $id("versionSettingsBtn"),
+            aboutCustomize: $id("aboutCustomize"),
+            aboutExport: $id("aboutExport"),
+            aboutCopy: $id("aboutCopy"),
+            aboutHomeBtn: $id("aboutHomeBtn"),
+            manageShortcutsBtn: $id("manageShortcutsBtn"),
+            versionShortcutCount: $id("versionShortcutCount"),
+            versionThemeName: $id("versionThemeName"),
+            versionSavedAt: $id("versionSavedAt"),
+            versionChips: $id("versionChips"),
+
+            editorBackBtn: $id("editorBackBtn"),
+            topSaveBtn: $id("topSaveBtn"),
+            bottomSaveBtn: $id("bottomSaveBtn"),
+            revertBtn: $id("revertBtn"),
+            dirtyIndicator: $id("dirtyIndicator"),
+            dirtyIndicatorBottom: $id("dirtyIndicatorBottom"),
+
+            themeGrid: $id("themeGrid"),
+            accentColor: $id("accentColor"),
+            accentHex: $id("accentHex"),
+            resetAccentBtn: $id("resetAccentBtn"),
+            bgStyle: $id("bgStyle"),
+            imageBgFields: $id("imageBgFields"),
+            bgUrl: $id("bgUrl"),
+            dimValue: $id("dimValue"),
+            blurValue: $id("blurValue"),
+            userName: $id("userName"),
+
+            searchEngine: $id("searchEngine"),
+            customSearchFields: $id("customSearchFields"),
+            customSearchUrl: $id("customSearchUrl"),
+            googlePlaceholder: $id("googlePlaceholder"),
+            geminiPlaceholder: $id("geminiPlaceholder"),
+
+            scTriggerInput: $id("scTriggerInput"),
+            scUrlInput: $id("scUrlInput"),
+            scSaveBtn: $id("scSaveBtn"),
+            scCancelBtn: $id("scCancelBtn"),
+            shortcutEditorList: $id("shortcutEditorList"),
+            shortcutCountLabel: $id("shortcutCountLabel"),
+
+            exportBtn: $id("exportBtn"),
+            copyConfigBtn: $id("copyConfigBtn"),
+            importFileBtn: $id("importFileBtn"),
+            importFileInput: $id("importFileInput"),
+            pasteImportBtn: $id("pasteImportBtn"),
+            lastSavedLabel: $id("lastSavedLabel"),
+            configSizeLabel: $id("configSizeLabel"),
+            legacyStatus: $id("legacyStatus"),
+            legacyImportBtn: $id("legacyImportBtn"),
+            clearDraftsBtn: $id("clearDraftsBtn"),
+            resetPrefsBtn: $id("resetPrefsBtn"),
+            factoryResetBtn: $id("factoryResetBtn"),
+            storageStatus: $id("storageStatus"),
+
+            modalOverlay: $id("modalOverlay"),
+            modalBox: $id("modalBox"),
+            modalTitle: $id("modalTitle"),
+            modalText: $id("modalText"),
+            modalField: $id("modalField"),
+            modalFieldLabel: $id("modalFieldLabel"),
+            modalInput: $id("modalInput"),
+            modalActions: $id("modalActions"),
+            modalCloseBtn: $id("modalCloseBtn"),
+
+            loadingOverlay: $id("loadingOverlay"),
+            toastRegion: $id("toastRegion"),
+            bgImage: $id("bgImage"),
+            themeColorMeta: $id("themeColorMeta")
+        };
+
+        /* ============================================================
+           State
+           ============================================================ */
+
+        const storageOk = storage.test();
+        const initial = loadInitialConfig();
+
+        let savedConfig = initial.config;
+        let draftConfig = clone(savedConfig);
+        let previewConfig = clone(savedConfig);
+
+        let currentView = "home";
+        let activeTab = "appearance";
+        let pendingTab = "appearance";
+        let editingTrigger = null;
+        let modalLastFocus = null;
+        let modalDismissible = true;
+        let draftTimer = null;
+
+        /* ============================================================
+           Theme + background
+           ============================================================ */
+
+        const applyAccent = (accent) => {
+            const hex = normalizeHex(accent, THEMES[savedConfig.theme].accent);
+            const rgb = hexToRgb(hex);
+            const darkInk = { r: 11, g: 15, b: 20 };
+            const whiteInk = { r: 255, g: 255, b: 255 };
+            const useDarkInk = contrastRatio(rgb, darkInk) >= contrastRatio(rgb, whiteInk);
+            const root = document.documentElement;
+            root.style.setProperty("--accent", hex);
+            root.style.setProperty("--accent-ink", useDarkInk ? "#0b0f14" : "#ffffff");
+            root.style.setProperty("--accent-soft", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.14)`);
+            root.style.setProperty("--accent-glow", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)`);
+            root.style.setProperty("--accent-strong", mixHex(hex, useDarkInk ? "#000000" : "#ffffff", 0.14));
+        };
+
+        const setBackgroundImage = (url) => {
+            if (!url) {
+                dom.bgImage.style.backgroundImage = "none";
+                return;
+            }
+            const safe = url.replace(/["\\\n\r]/g, (character) => encodeURIComponent(character));
+            dom.bgImage.style.backgroundImage = `url("${safe}")`;
+        };
+
+        const applyConfig = (config) => {
+            previewConfig = config;
+            const root = document.documentElement;
+            const theme = THEMES[config.theme] || THEMES.midnight;
+            const imageUrl = config.background === "image"
+                ? normalizeImageUrl(config.customBackgroundUrl)
+                : "";
+            const effectiveBackground = config.background === "image" && !imageUrl
+                ? "aurora"
+                : config.background;
+
+            root.dataset.theme = config.theme;
+            root.dataset.bg = effectiveBackground;
+            root.style.setProperty("--bg-dim", String(config.backgroundDim / 100));
+            root.style.setProperty("--bg-blur", config.backgroundBlur + "px");
+
+            applyAccent(config.accent);
+            dom.themeColorMeta.setAttribute("content", theme.meta);
+            document.body.classList.toggle("compact", Boolean(config.compact));
+
+            dom.clockWrap.hidden = !config.showClock;
+            dom.heroCopy.hidden = !config.showGreeting;
+            dom.searchForm.hidden = !config.showGoogle;
+            dom.geminiWrapper.hidden = !config.showGemini;
+
+            dom.searchInput.placeholder = config.googlePlaceholder;
+            dom.geminiInput.placeholder = config.geminiPlaceholder;
+
+            setBackgroundImage(imageUrl);
+            renderQuickLinks(config);
+            updateClock(config);
+        };
+
+        /* ============================================================
+           Clock + greeting
+           ============================================================ */
+
+        const updateClock = (config = previewConfig || savedConfig) => {
+            const now = new Date();
+            const name = (config.userName || "").trim();
+            const hour = now.getHours();
+            const greetingWord = hour < 5
+                ? "Good night"
+                : hour < 12
+                    ? "Good morning"
+                    : hour < 18
+                        ? "Good afternoon"
+                        : "Good evening";
+
+            dom.greeting.textContent = name ? `${greetingWord}, ${name}.` : `${greetingWord}.`;
+            dom.clockWrap.hidden = !config.showClock;
+            dom.heroCopy.hidden = !config.showGreeting;
+
+            try {
+                dom.clockTime.textContent = new Intl.DateTimeFormat(undefined, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: !config.clock24h
+                }).format(now);
+                dom.dateLine.textContent = new Intl.DateTimeFormat(undefined, {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long"
+                }).format(now);
+            } catch {
+                dom.clockTime.textContent = now.toLocaleTimeString();
+                dom.dateLine.textContent = now.toLocaleDateString();
+            }
+        };
+
+        /* ============================================================
+           Quick links
+           ============================================================ */
+
+        const makeQuickChip = (label, url) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "quick-chip";
+            chip.title = `Open ${url}`;
+
+            const key = document.createElement("span");
+            key.className = "chip-key";
+            key.textContent = label;
+
+            const text = document.createElement("span");
+            text.className = "chip-label";
+            text.textContent = prettyHost(url);
+
+            chip.append(key, text);
+            chip.addEventListener("click", () => {
+                window.open(url, "_blank", "noopener,noreferrer");
+            });
+            return chip;
+        };
+
+        const renderQuickLinks = (config = savedConfig) => {
+            const wrap = dom.quickLinks;
+            wrap.replaceChildren();
+
+            if (!config.showShortcutChips) {
+                wrap.hidden = true;
+                return;
+            }
+            wrap.hidden = false;
+
+            const entries = Object.entries(config.shortcuts);
+            if (!entries.length) {
+                const add = document.createElement("button");
+                add.type = "button";
+                add.className = "quick-chip add";
+                add.textContent = "Add your first shortcut";
+                add.addEventListener("click", () => openEditor("search"));
+                wrap.append(add);
+                return;
+            }
+
+            entries.slice(0, 10).forEach(([trigger, url]) => {
+                wrap.append(makeQuickChip(trigger, url));
+            });
+
+            if (entries.length > 10) {
+                const more = document.createElement("button");
+                more.type = "button";
+                more.className = "quick-chip add";
+                more.textContent = `+${entries.length - 10} more`;
+                more.addEventListener("click", () => openEditor("search"));
+                wrap.append(more);
+            }
+
+            const manage = document.createElement("button");
+            manage.type = "button";
+            manage.className = "quick-chip add";
+            manage.setAttribute("aria-label", "Manage shortcuts");
+            manage.title = "Manage shortcuts";
+            manage.textContent = "+";
+            manage.addEventListener("click", () => openEditor("search"));
+            wrap.append(manage);
+        };
+
+        /* ============================================================
+           Draft + height persistence
+           ============================================================ */
+
+        const currentHeights = () => {
+            const stored = loadHeights();
+            const measure = (input, fallback) => {
+                const height = input.getBoundingClientRect().height;
+                return height > 0 ? Math.max(40, Math.round(height)) : fallback;
+            };
+            return {
+                google: measure(dom.searchInput, stored.google),
+                gemini: measure(dom.geminiInput, stored.gemini)
+            };
+        };
+
+        const saveHeightsNow = () => {
+            const heights = currentHeights();
+            storage.set(STORAGE_KEYS.heights, JSON.stringify(heights));
+            storage.set(LEGACY_KEYS.googleHeight, heights.google + "px");
+            storage.set(LEGACY_KEYS.geminiHeight, heights.gemini + "px");
+        };
+
+        const saveDraftsNow = () => {
+            if (savedConfig.saveDrafts) {
+                storage.set(STORAGE_KEYS.drafts, JSON.stringify({
+                    google: dom.searchInput.value,
+                    gemini: dom.geminiInput.value
+                }));
+                storage.set(LEGACY_KEYS.geminiDraft, dom.geminiInput.value);
+            }
+            saveHeightsNow();
+        };
+
+        const saveDraftsSoon = () => {
+            window.clearTimeout(draftTimer);
+            draftTimer = window.setTimeout(saveDraftsNow, 320);
+        };
+
+        const autoGrow = (input, { save = false } = {}) => {
+            const minHeight = parseFloat(window.getComputedStyle(input).minHeight) || 40;
+            input.style.height = "auto";
+            const next = Math.min(300, Math.max(minHeight, input.scrollHeight));
+            input.style.height = next + "px";
+            input.style.overflowY = input.scrollHeight > 300 ? "auto" : "hidden";
+            if (save) saveDraftsSoon();
+        };
+
+        const restoreInputs = () => {
+            const drafts = loadDrafts();
+            const heights = loadHeights();
+
+            dom.searchInput.value = savedConfig.saveDrafts ? drafts.google : "";
+            dom.geminiInput.value = savedConfig.saveDrafts ? drafts.gemini : "";
+
+            if (dom.searchInput.value) autoGrow(dom.searchInput, { save: false });
+            else dom.searchInput.style.height = heights.google + "px";
+
+            if (dom.geminiInput.value) autoGrow(dom.geminiInput, { save: false });
+            else dom.geminiInput.style.height = heights.gemini + "px";
+        };
+
+        /* ============================================================
+           Search + Gemini
+           ============================================================ */
+
+        const findShortcut = (text, config = savedConfig) => {
+            const key = String(text || "").trim().toLowerCase();
+            if (!key) return null;
+            if (!Object.prototype.hasOwnProperty.call(config.shortcuts, key)) return null;
+            return config.shortcuts[key];
+        };
+
+        const openInNewTab = (url) => {
+            window.open(url, "_blank", "noopener,noreferrer");
+        };
+
+        const buildSearchUrl = (text, config = savedConfig) => {
+            const engine = SEARCH_ENGINES[config.searchEngine] || SEARCH_ENGINES.google;
+            const template = config.searchEngine === "custom"
+                ? (normalizeSearchUrl(config.customSearchUrl) || DEFAULT_CONFIG.customSearchUrl)
+                : engine.url;
+            return template.replace(/\{query\}/g, encodeURIComponent(text));
+        };
+
+        const performSearch = () => {
+            const text = dom.searchInput.value.trim();
+            if (!text) {
+                dom.searchInput.focus();
+                return;
+            }
+
+            const shortcut = findShortcut(text);
+            if (shortcut) {
+                openInNewTab(shortcut);
+                dom.searchInput.value = "";
+                autoGrow(dom.searchInput, { save: false });
+                saveDraftsNow();
+                return;
+            }
+
+            saveDraftsNow();
+            const url = buildSearchUrl(text);
+            if (savedConfig.openSearchInNewTab) openInNewTab(url);
+            else window.location.assign(url);
+        };
+
+        const copyText = async (text) => {
+            const previousFocus = document.activeElement;
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch {}
+            }
+
+            const area = document.createElement("textarea");
+            area.value = text;
+            area.setAttribute("readonly", "");
+            area.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+            document.body.appendChild(area);
+            area.select();
+            area.setSelectionRange(0, area.value.length);
+            let copied = false;
+            try { copied = document.execCommand("copy"); } catch { copied = false; }
+            area.remove();
+            if (previousFocus && typeof previousFocus.focus === "function") {
+                try { previousFocus.focus({ preventScroll: true }); } catch {}
+            }
+            if (!copied) throw new Error("Clipboard unavailable");
+            return true;
+        };
+
+        const askGemini = async () => {
+            const text = dom.geminiInput.value.trim();
+            if (!text) {
+                openInNewTab("https://gemini.google.com/app");
+                return;
+            }
+
+            const shortcut = findShortcut(text);
+            if (shortcut) {
+                openInNewTab(shortcut);
+                dom.geminiInput.value = "";
+                autoGrow(dom.geminiInput, { save: false });
+                saveDraftsNow();
+                return;
+            }
+
+            openInNewTab("https://gemini.google.com/app");
+
+            if (!savedConfig.copyGeminiPrompt) return;
+
+            try {
+                await copyText(text);
+                toast("Prompt copied. Paste it into Gemini.", "success");
+                if (dom.geminiInput.value.trim() === text) {
+                    dom.geminiInput.value = "";
+                    autoGrow(dom.geminiInput, { save: false });
+                    saveDraftsNow();
+                }
+            } catch {
+                toast("Could not copy automatically. Your prompt is still in the bar.", "error", 4200);
+            }
+        };
+
+        /* ============================================================
+           Toasts
+           ============================================================ */
+
+        const toast = (message, type = "info", duration = 3000) => {
+            const node = document.createElement("div");
+            node.className = "toast " + type;
+            node.textContent = message;
+            dom.toastRegion.append(node);
+
+            while (dom.toastRegion.children.length > 3) {
+                dom.toastRegion.firstElementChild.remove();
+            }
+
+            window.setTimeout(() => {
+                node.classList.add("leaving");
+                window.setTimeout(() => node.remove(), 220);
+            }, duration);
+        };
+
+        /* ============================================================
+           Settings UI
+           ============================================================ */
+
+        const renderThemeGrid = () => {
+            dom.themeGrid.replaceChildren();
+            for (const [id, theme] of Object.entries(THEMES)) {
+                const card = document.createElement("button");
+                card.type = "button";
+                card.className = "theme-card";
+                card.dataset.theme = id;
+                card.setAttribute("aria-pressed", "false");
+
+                const swatch = document.createElement("span");
+                swatch.className = "theme-swatch";
+                swatch.style.background = `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`;
+                swatch.style.setProperty("--swatch-accent", theme.accent);
+
+                const name = document.createElement("span");
+                name.className = "theme-name";
+                name.textContent = theme.name;
+
+                card.append(swatch, name);
+                card.addEventListener("click", () => selectTheme(id));
+                dom.themeGrid.append(card);
+            }
+        };
+
+        const updateThemeCards = () => {
+            $all(".theme-card", dom.themeGrid).forEach((card) => {
+                const active = card.dataset.theme === draftConfig.theme;
+                card.classList.toggle("active", active);
+                card.setAttribute("aria-pressed", String(active));
+            });
+        };
+
+        const selectTheme = (themeId) => {
+            const theme = THEMES[themeId];
+            if (!theme) return;
+            draftConfig = { ...draftConfig, theme: themeId, accent: theme.accent };
+            applyConfig(draftConfig);
+            syncAccentInputs();
+            updateThemeCards();
+            updateConditionalFields();
+            updateDirtyUI();
+        };
+
+        const syncAccentInputs = () => {
+            const hex = normalizeHex(draftConfig.accent, THEMES[draftConfig.theme].accent);
+            dom.accentColor.value = hex;
+            dom.accentHex.value = hex;
+        };
+
+        const updateConditionalFields = () => {
+            dom.imageBgFields.classList.toggle("hidden", draftConfig.background !== "image");
+            dom.customSearchFields.classList.toggle("hidden", draftConfig.searchEngine !== "custom");
+            dom.dimValue.textContent = clampInt(draftConfig.backgroundDim, 0, 90, 55) + "%";
+            dom.blurValue.textContent = clampInt(draftConfig.backgroundBlur, 0, 24, 0) + "px";
+        };
+
+        const isDirty = () =>
+            JSON.stringify(canonical(draftConfig)) !== JSON.stringify(canonical(savedConfig));
+
+        const updateDirtyUI = () => {
+            const dirty = isDirty();
+            dom.dirtyIndicator.classList.toggle("visible", dirty);
+            dom.dirtyIndicatorBottom.classList.toggle("visible", dirty);
+            dom.topSaveBtn.disabled = !dirty;
+            dom.bottomSaveBtn.disabled = !dirty;
+            dom.revertBtn.disabled = !dirty;
+            dom.topSaveBtn.textContent = dirty ? "Save" : "Saved";
+            dom.bottomSaveBtn.textContent = dirty ? "Save design" : "Saved";
+        };
+
+        const syncSettingsUI = () => {
+            $all("[data-config]", dom.editView).forEach((input) => {
+                const key = input.dataset.config;
+                if (!Object.prototype.hasOwnProperty.call(draftConfig, key)) return;
+                const value = draftConfig[key];
+                if (input.type === "checkbox") input.checked = Boolean(value);
+                else input.value = value ?? "";
+            });
+
+            syncAccentInputs();
+            updateThemeCards();
+            updateConditionalFields();
+            renderShortcutEditor();
+            updateDirtyUI();
+
+            if (activeTab === "data") updateDataTab();
+        };
+
+        const handleConfigChange = (event) => {
+            const input = event.target.closest("[data-config]");
+            if (!input) return;
+
+            const key = input.dataset.config;
+            let value;
+            if (input.type === "checkbox") value = input.checked;
+            else if (input.type === "range") value = Number(input.value);
+            else value = input.value;
+
+            if ((key === "showGoogle" || key === "showGemini") && value === false) {
+                const other = key === "showGoogle" ? draftConfig.showGemini : draftConfig.showGoogle;
+                if (!other) {
+                    input.checked = true;
+                    toast("Keep at least one search bar visible.", "error");
+                    return;
+                }
+            }
+
+            if (key === "searchEngine" && !Object.prototype.hasOwnProperty.call(SEARCH_ENGINES, value)) {
+                value = "google";
+            }
+
+            if (key === "accent") {
+                const hex = normalizeHex(value, null);
+                if (!hex) return;
+                value = hex;
+                dom.accentHex.value = hex;
+            }
+
+            draftConfig = { ...draftConfig, [key]: value };
+            applyConfig(draftConfig);
+            updateConditionalFields();
+            updateThemeCards();
+            updateDirtyUI();
+        };
+
+        /* ============================================================
+           Shortcut editor
+           ============================================================ */
+
+        const resetShortcutForm = () => {
+            editingTrigger = null;
+            dom.scTriggerInput.value = "";
+            dom.scUrlInput.value = "";
+            dom.scSaveBtn.textContent = "Add";
+            dom.scCancelBtn.classList.add("hidden");
+        };
+
+        const beginEditShortcut = (trigger) => {
+            editingTrigger = trigger;
+            dom.scTriggerInput.value = trigger;
+            dom.scUrlInput.value = draftConfig.shortcuts[trigger] || "";
+            dom.scSaveBtn.textContent = "Save";
+            dom.scCancelBtn.classList.remove("hidden");
+            dom.scTriggerInput.focus();
+            dom.scTriggerInput.select();
+        };
+
+        const deleteShortcut = (trigger) => {
+            const next = { ...draftConfig.shortcuts };
+            delete next[trigger];
+            draftConfig = { ...draftConfig, shortcuts: next };
+            if (editingTrigger === trigger) resetShortcutForm();
+            renderShortcutEditor();
+            applyConfig(draftConfig);
+            updateDirtyUI();
+            toast("Shortcut removed from the draft.", "info");
+        };
+
+        const renderShortcutEditor = () => {
+            const list = dom.shortcutEditorList;
+            list.replaceChildren();
+            const entries = Object.entries(draftConfig.shortcuts);
+
+            dom.shortcutCountLabel.textContent = String(entries.length);
+
+            if (!entries.length) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                empty.textContent = "No shortcuts yet. Add one above — for example: yt → https://youtube.com";
+                list.append(empty);
+                return;
+            }
+
+            for (const [trigger, url] of entries) {
+                const row = document.createElement("div");
+                row.className = "sc-row";
+
+                const key = document.createElement("span");
+                key.className = "sc-key";
+                key.textContent = trigger;
+
+                const address = document.createElement("span");
+                address.className = "sc-url";
+                address.textContent = url;
+                address.title = url;
+
+                const actions = document.createElement("div");
+                actions.className = "sc-actions";
+
+                const edit = document.createElement("button");
+                edit.type = "button";
+                edit.className = "mini-btn";
+                edit.setAttribute("aria-label", `Edit shortcut ${trigger}`);
+                edit.title = "Edit";
+                edit.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>';
+                edit.addEventListener("click", () => beginEditShortcut(trigger));
+
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "mini-btn danger";
+                remove.setAttribute("aria-label", `Delete shortcut ${trigger}`);
+                remove.title = "Delete";
+                remove.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>';
+                remove.addEventListener("click", () => deleteShortcut(trigger));
+
+                actions.append(edit, remove);
+                row.append(key, address, actions);
+                list.append(row);
+            }
+        };
+
+        const saveShortcutFromForm = () => {
+            const trigger = normalizeTrigger(dom.scTriggerInput.value);
+            const url = normalizeUrl(dom.scUrlInput.value);
+
+            if (!trigger) {
+                toast("Trigger must be 1–24 characters: letters, numbers or ! @ # $ % ^ & * _ + . -", "error", 4200);
+                dom.scTriggerInput.focus();
+                return;
+            }
+            if (!url) {
+                toast("Enter a valid http:// or https:// URL.", "error");
+                dom.scUrlInput.focus();
+                return;
+            }
+
+            const adding = !editingTrigger;
+            if (adding && Object.keys(draftConfig.shortcuts).length >= MAX_SHORTCUTS) {
+                toast(`Shortcut limit reached (${MAX_SHORTCUTS}).`, "error");
+                return;
+            }
+
+            if (editingTrigger && editingTrigger !== trigger &&
+                Object.prototype.hasOwnProperty.call(draftConfig.shortcuts, trigger)) {
+                toast("That trigger already exists. Pick another one.", "error");
+                dom.scTriggerInput.focus();
+                return;
+            }
+
+            if (adding && Object.prototype.hasOwnProperty.call(draftConfig.shortcuts, trigger)) {
+                toast("That trigger already exists. Edit the existing shortcut instead.", "error");
+                dom.scTriggerInput.focus();
+                return;
+            }
+
+            const next = { ...draftConfig.shortcuts };
+            if (editingTrigger && editingTrigger !== trigger) delete next[editingTrigger];
+            next[trigger] = url;
+
+            draftConfig = { ...draftConfig, shortcuts: next };
+            resetShortcutForm();
+            renderShortcutEditor();
+            applyConfig(draftConfig);
+            updateDirtyUI();
+            toast(adding ? "Shortcut added to the draft." : "Shortcut updated in the draft.", "success");
+        };
+
+        /* ============================================================
+           Tabs
+           ============================================================ */
+
+        const switchTab = (name, { focusTab = false } = {}) => {
+            if (!["appearance", "search", "behaviour", "data"].includes(name)) return;
+            activeTab = name;
+
+            $all(".tab", dom.editView).forEach((tab) => {
+                const selected = tab.dataset.tab === name;
+                tab.classList.toggle("active", selected);
+                tab.setAttribute("aria-selected", String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+                if (selected && focusTab) tab.focus();
+            });
+
+            $all(".tab-panel", dom.editView).forEach((panel) => {
+                panel.classList.toggle("active", panel.id === "tab-" + name);
+            });
+
+            if (name === "data") updateDataTab();
+        };
+
+        /* ============================================================
+           Modal
+           ============================================================ */
+
+        const openModal = ({ title, text, field, actions, dismissible = true }) => {
+            modalLastFocus = document.activeElement;
+            modalDismissible = dismissible;
+
+            dom.modalTitle.textContent = title || "";
+            dom.modalText.textContent = text || "";
+            dom.modalText.hidden = !text;
+
+            dom.modalField.classList.toggle("hidden", !field);
+            if (field) {
+                dom.modalFieldLabel.textContent = field.label || "Value";
+                dom.modalInput.value = field.value || "";
+                dom.modalInput.placeholder = field.placeholder || "";
+            } else {
+                dom.modalInput.value = "";
+            }
+
+            dom.modalActions.replaceChildren();
+            let spacerAdded = false;
+
+            (actions || []).forEach((action) => {
+                if (action.align === "left" && !spacerAdded) {
+                    const spacer = document.createElement("span");
+                    spacer.className = "modal-spacer";
+                    dom.modalActions.append(spacer);
+                    spacerAdded = true;
+                }
+
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "btn btn-" + (action.variant || "secondary");
+                button.textContent = action.label || "OK";
+                if (action.autofocus) button.dataset.autofocus = "true";
+                button.addEventListener("click", () => {
+                    const result = action.onClick ? action.onClick() : true;
+                    if (result !== false) closeModal();
+                });
+                dom.modalActions.append(button);
+            });
+
+            dom.modalOverlay.classList.add("active");
+            dom.modalOverlay.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-open");
+
+            window.setTimeout(() => {
+                const preferred = dom.modalBox.querySelector("[data-autofocus]");
+                const target = preferred || (field ? dom.modalInput : dom.modalActions.querySelector("button"));
+                if (target) {
+                    try { target.focus(); } catch {}
+                }
+            }, 40);
+        };
+
+        const closeModal = () => {
+            if (!dom.modalOverlay.classList.contains("active")) return;
+            dom.modalOverlay.classList.remove("active");
+            dom.modalOverlay.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("modal-open");
+
+            if (modalLastFocus && modalLastFocus.isConnected && modalLastFocus.offsetParent !== null) {
+                try { modalLastFocus.focus({ preventScroll: true }); } catch {}
+            }
+            modalLastFocus = null;
+        };
+
+        /* ============================================================
+           View routing
+           ============================================================ */
+
+        const views = {
+            home: dom.homeView,
+            version: dom.versionView,
+            edit: dom.editView
+        };
+
+        const renderVersionView = () => {
+            dom.versionShortcutCount.textContent = String(Object.keys(savedConfig.shortcuts).length);
+            dom.versionThemeName.textContent = (THEMES[savedConfig.theme] || THEMES.midnight).name;
+            dom.versionSavedAt.textContent = formatSavedAt(storage.get(STORAGE_KEYS.lastSaved));
+
+            dom.versionChips.replaceChildren();
+            const entries = Object.entries(savedConfig.shortcuts);
+            if (!entries.length) {
+                const empty = document.createElement("span");
+                empty.className = "chip-row";
+                empty.style.margin = "0";
+                empty.style.color = "var(--muted)";
+                empty.style.fontSize = "12px";
+                empty.textContent = "No shortcuts yet.";
+                dom.versionChips.append(empty);
+                return;
+            }
+
+            entries.slice(0, 8).forEach(([trigger, url]) => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "mini-chip";
+                chip.title = `Open ${url}`;
+
+                const key = document.createElement("b");
+                key.textContent = trigger;
+                const host = document.createElement("span");
+                host.textContent = prettyHost(url);
+                chip.append(key, host);
+                chip.addEventListener("click", () => openInNewTab(url));
+                dom.versionChips.append(chip);
+            });
+
+            if (entries.length > 8) {
+                const more = document.createElement("span");
+                more.className = "mini-chip";
+                more.textContent = `+${entries.length - 8} more`;
+                dom.versionChips.append(more);
+            }
+        };
+
+        const onViewEnter = (name) => {
+            if (name === "home") {
+                applyConfig(savedConfig);
+                renderQuickLinks(savedConfig);
+                updateClock(savedConfig);
+                window.setTimeout(() => {
+                    if (savedConfig.autofocus && window.matchMedia("(pointer: fine)").matches) {
+                        try { dom.searchInput.focus({ preventScroll: true }); } catch {}
+                    }
+                }, 70);
+                return;
+            }
+
+            if (name === "version") {
+                applyConfig(savedConfig);
+                renderVersionView();
+                return;
+            }
+
+            if (name === "edit") {
+                draftConfig = clone(savedConfig);
+                editingTrigger = null;
+                resetShortcutForm();
+                syncSettingsUI();
+                applyConfig(draftConfig);
+                switchTab(pendingTab || "appearance");
+                pendingTab = "appearance";
+            }
+        };
+
+        const switchView = (name, { force = false } = {}) => {
+            if (!views[name] || name === currentView) return;
+
+            if (currentView === "edit" && name !== "edit" && !force && isDirty()) {
+                promptExitEditor();
+                return;
+            }
+
+            views[currentView].classList.add("hidden");
+            const next = views[name];
+            next.classList.remove("hidden");
+            next.classList.remove("view-enter");
+            void next.offsetWidth;
+            next.classList.add("view-enter");
+
+            currentView = name;
+            window.scrollTo(0, 0);
+            onViewEnter(name);
+        };
+
+        const openEditor = (tab = "appearance") => {
+            pendingTab = tab;
+            if (currentView === "edit") {
+                switchTab(tab);
+                return;
+            }
+            switchView("edit");
+        };
+
+        const discardDraft = () => {
+            draftConfig = clone(savedConfig);
+            resetShortcutForm();
+            applyConfig(savedConfig);
+            syncSettingsUI();
+        };
+
+        const promptExitEditor = () => {
+            if (!isDirty()) {
+                switchView("home", { force: true });
+                return;
+            }
+
+            openModal({
+                title: "Unsaved design changes",
+                text: "Your customizer changes are only a preview until you save them. Pick what happens next.",
+                actions: [
+                    {
+                        label: "Save design",
+                        variant: "secondary",
+                        align: "left",
+                        onClick: () => {
+                            const ok = saveConfig();
+                            if (!ok) closeModal();
+                            return ok;
+                        }
+                    },
+                    {
+                        label: "Don't save",
+                        variant: "secondary",
+                        onClick: () => {
+                            discardDraft();
+                            switchView("home", { force: true });
+                        }
+                    },
+                    {
+                        label: "Save and exit",
+                        variant: "primary",
+                        autofocus: true,
+                        onClick: () => {
+                            const ok = saveConfig();
+                            if (ok) switchView("home", { force: true });
+                            else closeModal();
+                            return ok;
+                        }
+                    }
+                ]
+            });
+        };
+
+        /* ============================================================
+           Save / data
+           ============================================================ */
+
+        const saveConfig = ({ silent = false } = {}) => {
+            if (!draftConfig.showGoogle && !draftConfig.showGemini) {
+                switchTab("search");
+                toast("Keep at least one search bar visible.", "error");
+                return false;
+            }
+
+            if (draftConfig.searchEngine === "custom" && !normalizeSearchUrl(draftConfig.customSearchUrl)) {
+                switchTab("search");
+                toast("The custom search URL needs a valid {query} placeholder.", "error", 4200);
+                return false;
+            }
+
+            if (draftConfig.background === "image" && !normalizeImageUrl(draftConfig.customBackgroundUrl)) {
+                switchTab("appearance");
+                toast("Add a valid background image URL, or choose another style.", "error", 4200);
+                return false;
+            }
+
+            const normalized = normalizeConfig(draftConfig);
+            const persisted = storage.set(STORAGE_KEYS.config, JSON.stringify(normalized));
+
+            storage.set(LEGACY_KEYS.shortcuts, JSON.stringify(normalized.shortcuts));
+            savedConfig = clone(normalized);
+            draftConfig = clone(normalized);
+
+            if (persisted) storage.set(STORAGE_KEYS.lastSaved, new Date().toISOString());
+
+            if (!savedConfig.saveDrafts) {
+                storage.remove(STORAGE_KEYS.drafts);
+                storage.remove(LEGACY_KEYS.geminiDraft);
+            } else {
+                saveDraftsNow();
+            }
+
+            applyConfig(savedConfig);
+            syncSettingsUI();
+            renderVersionView();
+
+            if (!silent) {
+                toast(persisted
+                    ? "Design saved."
+                    : "Applied for this session — local storage is blocked.",
+                    persisted ? "success" : "warning",
+                    3600);
+            }
+            return true;
+        };
+
+        const configPayload = () => {
+            const source = currentView === "edit" ? draftConfig : savedConfig;
+            return {
+                ...normalizeConfig(source),
+                appVersion: APP_VERSION,
+                exportedAt: new Date().toISOString()
+            };
+        };
+
+        const exportConfig = () => {
+            const payload = configPayload();
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "engine-config-v2.4.json";
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+            toast("Config exported.", "success");
+        };
+
+        const copyConfig = async () => {
+            try {
+                await copyText(JSON.stringify(configPayload(), null, 2));
+                toast("Config JSON copied to the clipboard.", "success");
+            } catch {
+                toast("Could not copy the config. Try exporting a file instead.", "error");
+            }
+        };
+
+        const importConfigFromText = (text) => {
+            const parsed = safeParse(text, null);
+            if (!isPlainObject(parsed)) throw new Error("That is not valid JSON.");
+
+            const known = Object.keys(DEFAULT_CONFIG).filter((key) => key !== "configVersion");
+            if (!known.some((key) => Object.prototype.hasOwnProperty.call(parsed, key))) {
+                throw new Error("That JSON does not look like an Engine config.");
+            }
+
+            const incoming = { ...parsed };
+            delete incoming.appVersion;
+            delete incoming.exportedAt;
+
+            const merged = { ...draftConfig, ...incoming };
+            if (isPlainObject(incoming.shortcuts)) {
+                merged.shortcuts = normalizeShortcuts(incoming.shortcuts);
+            } else {
+                merged.shortcuts = draftConfig.shortcuts;
+            }
+
+            draftConfig = normalizeConfig(merged);
+            applyConfig(draftConfig);
+            syncSettingsUI();
+            updateDirtyUI();
+        };
+
+        const openImportTextModal = () => {
+            openModal({
+                title: "Import config from text",
+                text: "Paste an Engine config backup below. It loads into the customizer as an unsaved draft.",
+                field: {
+                    label: "Config JSON",
+                    value: "",
+                    placeholder: '{\n  "theme": "midnight",\n  "shortcuts": { "yt": "https://youtube.com" }\n}'
+                },
+                actions: [
+                    { label: "Cancel", variant: "secondary" },
+                    {
+                        label: "Load config",
+                        variant: "primary",
+                        onClick: () => {
+                            try {
+                                if (!dom.modalInput.value.trim()) throw new Error("Paste a config first.");
+                                importConfigFromText(dom.modalInput.value);
+                                toast("Config loaded into the draft. Review and save.", "success", 3600);
+                                return true;
+                            } catch (error) {
+                                toast(error.message || "Could not import that config.", "error", 4200);
+                                return false;
+                            }
+                        }
+                    }
+                ]
+            });
+        };
+
+        const importLegacySettings = () => {
+            const legacy = readLegacyShortcuts();
+            const legacyGoogle = parseHeight(storage.get(LEGACY_KEYS.googleHeight));
+            const legacyGemini = parseHeight(storage.get(LEGACY_KEYS.geminiHeight));
+            const legacyDraft = storage.get(LEGACY_KEYS.geminiDraft) || "";
+
+            if (!legacy.count && legacyGoogle === null && legacyGemini === null && !legacyDraft) {
+                toast("No v2.3 settings were found in this browser.", "info", 3600);
+                return;
+            }
+
+            let added = 0;
+            const next = { ...draftConfig.shortcuts };
+            for (const [trigger, url] of Object.entries(legacy.shortcuts)) {
+                if (!Object.prototype.hasOwnProperty.call(next, trigger)) {
+                    next[trigger] = url;
+                    added += 1;
+                }
+            }
+
+            draftConfig = { ...draftConfig, shortcuts: next };
+
+            if (legacyGoogle !== null) {
+                if (dom.searchInput.value.trim()) autoGrow(dom.searchInput, { save: false });
+                else dom.searchInput.style.height = legacyGoogle + "px";
+            }
+            if (legacyGemini !== null) {
+                if (dom.geminiInput.value.trim()) autoGrow(dom.geminiInput, { save: false });
+                else dom.geminiInput.style.height = legacyGemini + "px";
+            }
+
+            if (legacyDraft && !dom.geminiInput.value.trim() && savedConfig.saveDrafts) {
+                dom.geminiInput.value = legacyDraft;
+                autoGrow(dom.geminiInput, { save: false });
+            }
+
+            saveHeightsNow();
+            applyConfig(draftConfig);
+            syncSettingsUI();
+            updateDirtyUI();
+
+            toast(
+                added
+                    ? `Imported ${added} shortcut${added === 1 ? "" : "s"} from v2.3. Review and save.`
+                    : "v2.3 draft and input sizes applied. Review and save.",
+                "success",
+                4200
+            );
+        };
+
+        const updateDataTab = () => {
+            const lastSaved = storage.get(STORAGE_KEYS.lastSaved);
+            let savedLabel = "Not saved yet";
+            if (lastSaved) {
+                const date = new Date(lastSaved);
+                if (!Number.isNaN(date.getTime())) {
+                    try {
+                        savedLabel = new Intl.DateTimeFormat(undefined, {
+                            dateStyle: "medium",
+                            timeStyle: "short"
+                        }).format(date);
+                    } catch {
+                        savedLabel = date.toLocaleString();
+                    }
+                }
+            }
+            dom.lastSavedLabel.textContent = savedLabel;
+
+            const size = new Blob([JSON.stringify(savedConfig)]).size;
+            dom.configSizeLabel.textContent = formatBytes(size);
+
+            const legacy = readLegacyShortcuts();
+            dom.legacyStatus.textContent = legacy.count
+                ? `Found ${legacy.count} valid shortcut${legacy.count === 1 ? "" : "s"} in the old engineShortcuts key. Import merges any that are missing from the draft.`
+                : "No shortcut data found in the old engineShortcuts key. Input heights and the Gemini draft are also checked on import.";
+
+            dom.storageStatus.textContent = storageOk
+                ? "Local storage is available. Config, shortcuts and drafts stay on this device."
+                : "Local storage is blocked. Settings will only last for this session.";
+        };
+
+        const clearDrafts = () => {
+            storage.remove(STORAGE_KEYS.drafts);
+            storage.remove(LEGACY_KEYS.geminiDraft);
+            dom.searchInput.value = "";
+            dom.geminiInput.value = "";
+            dom.searchInput.style.height = "40px";
+            dom.geminiInput.style.height = "40px";
+            saveHeightsNow();
+            toast("Drafts cleared.", "success");
+        };
+
+        const resetPreferences = () => {
+            openModal({
+                title: "Reset preferences?",
+                text: "Theme, background, search engine, layout and behaviour return to defaults. Your shortcuts stay exactly where they are.",
+                actions: [
+                    { label: "Cancel", variant: "secondary", autofocus: true },
+                    {
+                        label: "Reset preferences",
+                        variant: "danger",
+                        onClick: () => {
+                            draftConfig = normalizeConfig({
+                                ...DEFAULT_CONFIG,
+                                shortcuts: clone(draftConfig.shortcuts)
+                            });
+                            applyConfig(draftConfig);
+                            syncSettingsUI();
+                            updateDirtyUI();
+                            toast("Preferences reset in the draft. Save to keep it.", "success", 3600);
+                        }
+                    }
+                ]
+            });
+        };
+
+        const factoryReset = () => {
+            openModal({
+                title: "Factory reset everything?",
+                text: "This wipes Engine settings, shortcuts, drafts and the v2.3 legacy keys on this device. There is no undo button. Export a backup first if you care about it.",
+                actions: [
+                    { label: "Cancel", variant: "secondary", autofocus: true },
+                    {
+                        label: "Factory reset",
+                        variant: "danger",
+                        onClick: () => {
+                            const fresh = normalizeConfig(DEFAULT_CONFIG);
+                            savedConfig = clone(fresh);
+                            draftConfig = clone(fresh);
+                            editingTrigger = null;
+                            resetShortcutForm();
+
+                            storage.set(STORAGE_KEYS.config, JSON.stringify(fresh));
+                            storage.set(LEGACY_KEYS.shortcuts, "{}");
+                            storage.set(STORAGE_KEYS.lastSaved, new Date().toISOString());
+                            storage.remove(STORAGE_KEYS.drafts);
+                            storage.remove(STORAGE_KEYS.heights);
+                            storage.remove(LEGACY_KEYS.geminiDraft);
+                            storage.remove(LEGACY_KEYS.googleHeight);
+                            storage.remove(LEGACY_KEYS.geminiHeight);
+
+                            dom.searchInput.value = "";
+                            dom.geminiInput.value = "";
+                            dom.searchInput.style.height = "40px";
+                            dom.geminiInput.style.height = "40px";
+
+                            applyConfig(savedConfig);
+                            syncSettingsUI();
+                            renderVersionView();
+                            toast("Factory reset complete. A clean Engine awaits.", "success", 3600);
+                        }
+                    }
+                ]
+            });
+        };
+
+        /* ============================================================
+           Event wiring
+           ============================================================ */
+
+        const bindEvents = () => {
+            /* Home search */
+            dom.searchForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                performSearch();
+            });
+
+            dom.searchInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+                    event.preventDefault();
+                    dom.searchForm.requestSubmit();
+                }
+            });
+
+            dom.searchInput.addEventListener("input", () => {
+                autoGrow(dom.searchInput);
+                saveDraftsSoon();
+            });
+
+            dom.geminiInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+                    event.preventDefault();
+                    askGemini();
+                }
+            });
+
+            dom.geminiInput.addEventListener("input", () => {
+                autoGrow(dom.geminiInput);
+                saveDraftsSoon();
+            });
+
+            dom.geminiBtn.addEventListener("click", askGemini);
+
+            /* Navigation */
+            dom.brandBtn.addEventListener("click", () => {
+                if (currentView !== "home") switchView("home");
+                else {
+                    try { dom.searchInput.focus(); } catch {}
+                }
+            });
+
+            dom.settingsBtn.addEventListener("click", () => openEditor("appearance"));
+            dom.footerCustomize.addEventListener("click", () => openEditor("appearance"));
+            dom.versionBadge.addEventListener("click", () => switchView("version"));
+            dom.versionBackBtn.addEventListener("click", () => switchView("home"));
+            dom.versionSettingsBtn.addEventListener("click", () => openEditor("appearance"));
+            dom.aboutCustomize.addEventListener("click", () => openEditor("appearance"));
+            dom.manageShortcutsBtn.addEventListener("click", () => openEditor("search"));
+            dom.aboutExport.addEventListener("click", exportConfig);
+            dom.aboutCopy.addEventListener("click", copyConfig);
+            dom.aboutHomeBtn.addEventListener("click", () => switchView("home"));
+
+            /* Customizer navigation */
+            dom.editorBackBtn.addEventListener("click", promptExitEditor);
+            dom.topSaveBtn.addEventListener("click", () => saveConfig());
+            dom.bottomSaveBtn.addEventListener("click", () => saveConfig());
+            dom.revertBtn.addEventListener("click", () => {
+                discardDraft();
+                toast("Draft reverted to the saved design.", "info");
+            });
+
+            /* Tabs */
+            const tabs = $all(".tab", dom.editView);
+            tabs.forEach((tab, index) => {
+                tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+                tab.addEventListener("keydown", (event) => {
+                    let next = null;
+                    if (event.key === "ArrowRight") next = tabs[(index + 1) % tabs.length];
+                    else if (event.key === "ArrowLeft") next = tabs[(index - 1 + tabs.length) % tabs.length];
+                    else if (event.key === "Home") next = tabs[0];
+                    else if (event.key === "End") next = tabs[tabs.length - 1];
+                    if (next) {
+                        event.preventDefault();
+                        switchTab(next.dataset.tab, { focusTab: true });
+                    }
+                });
+            });
+
+            /* Config controls */
+            dom.editView.addEventListener("input", handleConfigChange);
+            dom.editView.addEventListener("change", handleConfigChange);
+
+            dom.accentColor.addEventListener("input", () => {
+                dom.accentHex.value = dom.accentColor.value;
+            });
+
+            dom.accentHex.addEventListener("input", () => {
+                const hex = normalizeHex(dom.accentHex.value, null);
+                if (!hex) return;
+                draftConfig = { ...draftConfig, accent: hex };
+                dom.accentColor.value = hex;
+                applyConfig(draftConfig);
+                updateDirtyUI();
+            });
+
+            dom.accentHex.addEventListener("change", () => {
+                const hex = normalizeHex(dom.accentHex.value, null);
+                if (!hex) {
+                    dom.accentHex.value = normalizeHex(draftConfig.accent, THEMES[draftConfig.theme].accent);
+                    toast("Use a 6-digit hex colour such as #8ab4f8.", "error");
+                } else {
+                    dom.accentHex.value = hex;
+                }
+            });
+
+            dom.resetAccentBtn.addEventListener("click", () => {
+                draftConfig = { ...draftConfig, accent: THEMES[draftConfig.theme].accent };
+                applyConfig(draftConfig);
+                syncAccentInputs();
+                updateDirtyUI();
+            });
+
+            /* Shortcut editor */
+            dom.scSaveBtn.addEventListener("click", saveShortcutFromForm);
+            dom.scCancelBtn.addEventListener("click", resetShortcutForm);
+
+            const shortcutEnter = (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    saveShortcutFromForm();
+                } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    resetShortcutForm();
+                }
+            };
+            dom.scTriggerInput.addEventListener("keydown", shortcutEnter);
+            dom.scUrlInput.addEventListener("keydown", shortcutEnter);
+
+            /* Data tab */
+            dom.exportBtn.addEventListener("click", exportConfig);
+            dom.copyConfigBtn.addEventListener("click", copyConfig);
+            dom.importFileBtn.addEventListener("click", () => dom.importFileInput.click());
+            dom.pasteImportBtn.addEventListener("click", openImportTextModal);
+            dom.legacyImportBtn.addEventListener("click", importLegacySettings);
+            dom.clearDraftsBtn.addEventListener("click", clearDrafts);
+            dom.resetPrefsBtn.addEventListener("click", resetPreferences);
+            dom.factoryResetBtn.addEventListener("click", factoryReset);
+
+            dom.importFileInput.addEventListener("change", async () => {
+                const file = dom.importFileInput.files && dom.importFileInput.files[0];
+                if (!file) return;
+                try {
+                    const text = await file.text();
+                    importConfigFromText(text);
+                    toast(`Imported ${file.name} into the draft. Review and save.`, "success", 3800);
+                } catch (error) {
+                    toast(error.message || "Could not import that file.", "error", 4200);
+                } finally {
+                    dom.importFileInput.value = "";
+                }
+            });
+
+            /* Modal */
+            dom.modalCloseBtn.addEventListener("click", () => closeModal());
+            dom.modalOverlay.addEventListener("click", (event) => {
+                if (event.target === dom.modalOverlay && modalDismissible) closeModal();
+            });
+
+            dom.modalOverlay.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (modalDismissible) closeModal();
+                    return;
+                }
+                if (event.key !== "Tab") return;
+
+                const focusable = $all(
+                    'button:not([disabled]), textarea, input, select, a[href], [tabindex]:not([tabindex="-1"])',
+                    dom.modalBox
+                ).filter((element) => element.offsetParent !== null);
+
+                if (!focusable.length) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            });
+
+            /* Global keyboard */
+            document.addEventListener("keydown", (event) => {
+                if (dom.modalOverlay.classList.contains("active")) return;
+
+                const activeTag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+                const typing = ["input", "textarea", "select"].includes(activeTag) ||
+                    Boolean(document.activeElement && document.activeElement.isContentEditable);
+
+                if (event.key === "Escape") {
+                    if (currentView === "edit") {
+                        event.preventDefault();
+                        promptExitEditor();
+                    } else if (currentView === "version") {
+                        event.preventDefault();
+                        switchView("home");
+                    } else if (typing) {
+                        document.activeElement.blur();
+                    }
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key === ",") {
+                    event.preventDefault();
+                    openEditor("appearance");
+                    return;
+                }
+
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+                    if (currentView === "edit") {
+                        event.preventDefault();
+                        if (isDirty()) saveConfig();
+                        else toast("No changes to save.", "info", 1800);
+                    }
+                    return;
+                }
+
+                if (event.key === "/" && !typing && currentView === "home") {
+                    event.preventDefault();
+                    dom.searchInput.focus();
+                }
+            });
+
+            /* Keep sizes sane on resize */
+            window.addEventListener("resize", () => {
+                if (currentView === "home") {
+                    autoGrow(dom.searchInput, { save: false });
+                    autoGrow(dom.geminiInput, { save: false });
+                }
+            });
+
+            /* Persist drafts when the page sleeps */
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "hidden") saveDraftsNow();
+            });
+            window.addEventListener("beforeunload", saveDraftsNow);
+        };
+
+        /* ============================================================
+           Boot
+           ============================================================ */
+
+        const init = () => {
+            renderThemeGrid();
+            restoreInputs();
+            syncSettingsUI();
+            applyConfig(savedConfig);
+            renderVersionView();
+            updateDataTab();
+            switchTab("appearance");
+            updateClock(savedConfig);
+            renderQuickLinks(savedConfig);
+
+            if (initial.migrated && initial.legacyCount > 0) {
+                window.setTimeout(() => {
+                    toast(
+                        `Imported ${initial.legacyCount} shortcut${initial.legacyCount === 1 ? "" : "s"} from the v2.3 page.`,
+                        "success",
+                        4200
+                    );
+                }, 800);
+            }
+
+            if (!storageOk) {
+                window.setTimeout(() => {
+                    toast("Local storage is blocked. Settings will not persist.", "warning", 5000);
+                }, 1100);
+            }
+
+            window.setInterval(() => updateClock(), 30000);
+
+            if (savedConfig.autofocus && window.matchMedia("(pointer: fine)").matches) {
+                window.setTimeout(() => {
+                    try { dom.searchInput.focus({ preventScroll: true }); } catch {}
+                }, 180);
+            }
+        };
+
+        bindEvents();
+        init();
+    })();
+    </script>
+</body>
+</html>

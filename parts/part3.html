@@ -1,0 +1,200 @@
+    <!-- SVG icon sprite -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5 14.1 9.9 21.5 12l-7.4 2.1L12 21.5l-2.1-7.4L2.5 12l7.4-2.1L12 2.5Z"/></symbol>
+        <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+        <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M4 3h16"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="15" cy="6" r="2"/><circle cx="7" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></symbol>
+        <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 14h.01M18 14h.01M9 14h6"/></symbol>
+    </svg>
+
+    <div class="ambient" aria-hidden="true">
+        <div class="bg-image" id="bgImage"></div>
+        <div class="bg-veil"></div>
+        <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+        <div class="mesh"></div>
+    </div>
+
+    <!-- ============================== HOME ============================== -->
+    <div class="view-panel" id="homeView">
+        <div class="app-shell">
+            <header class="topbar">
+                <button class="brand" id="brandBtn" type="button" aria-label="Engine home">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <span class="brand-name">ENGINE</span>
+                </button>
+                <div class="topbar-right">
+                    <div class="clock" id="clockWrap" aria-hidden="true">
+                        <span id="clockTime">--:--</span>
+                    </div>
+                    <button class="icon-btn" id="settingsBtn" type="button" aria-label="Open Engine Customizer" title="Customize (Ctrl+,)">
+                        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="home-main">
+                <div class="hero">
+                    <div class="hero-copy" id="heroCopy">
+                        <p class="eyebrow" id="greeting">Good evening, Max.</p>
+                        <p class="subline" id="dateLine">Wednesday, 28 October</p>
+                    </div>
+
+                    <div class="search-stack">
+                        <form class="search-wrapper google-wrapper" id="searchForm" role="search" autocomplete="off">
+                            <div class="search-box">
+                                <textarea id="searchInput" class="search-input" rows="1" placeholder="Search Google..." aria-label="Search the web" spellcheck="false" enterkeyhint="search"></textarea>
+                                <button class="search-btn" type="submit" aria-label="Search" title="Search">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="search-wrapper gemini-wrapper" id="geminiWrapper">
+                            <div class="search-box">
+                                <textarea id="geminiInput" class="search-input" rows="1" placeholder="Ask Gemini..." aria-label="Ask Gemini" spellcheck="false" enterkeyhint="send"></textarea>
+                                <button class="search-btn gemini-btn" id="geminiBtn" type="button" aria-label="Open Gemini and copy prompt" title="Open Gemini">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-sparkle"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quick-links" id="quickLinks" aria-label="Shortcuts"></div>
+
+                    <div class="hints" id="homeHints">
+                        <span><kbd>Enter</kbd> search</span>
+                        <span><kbd>Shift</kbd> + <kbd>Enter</kbd> new line</span>
+                        <span><kbd>Ctrl</kbd> + <kbd>,</kbd> customize</span>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="app-footer">
+                <button class="version-pill" id="versionBadge" type="button" aria-label="About Engine">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    v2.4 <span class="version-sep">·</span> Aurora
+                </button>
+                <div class="footer-note">
+                    <span>Made by Max</span>
+                    <span class="footer-sep">·</span>
+                    <button class="link-btn" id="footerCustomize" type="button">Customize</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- ============================== ABOUT / VERSION ============================== -->
+    <div class="view-panel hidden" id="versionView">
+        <div class="page-shell">
+            <header class="page-topbar">
+                <button class="btn btn-ghost" id="versionBackBtn" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    Engine
+                </button>
+                <div class="page-topbar-actions">
+                    <button class="icon-btn" id="versionSettingsBtn" type="button" aria-label="Open Engine Customizer" title="Customize">
+                        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="about-main">
+                <section class="about-hero">
+                    <div class="about-logo" aria-hidden="true">E</div>
+                    <p class="about-kicker">Made by Max</p>
+                    <h1>Engine <span>v2.4.0</span></h1>
+                    <p class="about-sub">The Aurora update. A startpage that finally knows what it is doing — themes, shortcuts, backups and a customizer that actually customizes.</p>
+                </section>
+
+                <div class="about-grid">
+                    <section class="card">
+                        <h2>What's new</h2>
+                        <ul class="changelog">
+                            <li>The Engine Customizer is finished — no more placeholder screen.</li>
+                            <li>Five themes, live accent colours and aurora, mesh, solid or image backgrounds.</li>
+                            <li>Google, DuckDuckGo, Bing, Brave, Startpage or your own search URL.</li>
+                            <li>Shortcuts got a real editor: add, rename, delete and quick-launch.</li>
+                            <li>v2.3 settings migrate automatically, including shortcuts and input heights.</li>
+                            <li>Export, import and reset controls, plus safer clipboard handling for Gemini.</li>
+                            <li>Accessible dialogs, focus management, reduced-motion support and keyboard shortcuts.</li>
+                        </ul>
+                    </section>
+
+                    <section class="card">
+                        <h2>Your setup</h2>
+                        <div class="stat-grid">
+                            <div class="stat">
+                                <span class="stat-value" id="versionShortcutCount">0</span>
+                                <span class="stat-label">Shortcuts</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="versionThemeName">Midnight</span>
+                                <span class="stat-label">Theme</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="versionSavedAt">—</span>
+                                <span class="stat-label">Saved</span>
+                            </div>
+                        </div>
+                        <div class="chip-row" id="versionChips"></div>
+                        <button class="btn btn-secondary" id="manageShortcutsBtn" type="button">
+                            <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg>
+                            Manage shortcuts
+                        </button>
+                    </section>
+
+                    <section class="card">
+                        <h2>Quick actions</h2>
+                        <p class="card-sub">The useful bits, one click away.</p>
+                        <div class="action-stack">
+                            <button class="btn btn-primary" id="aboutCustomize" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+                                Open Engine Customizer
+                            </button>
+                            <button class="btn btn-secondary" id="aboutExport" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                                Export config
+                            </button>
+                            <button class="btn btn-secondary" id="aboutCopy" type="button">
+                                <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+                                Copy config JSON
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <h2>Keyboard</h2>
+                        <div class="keymap">
+                            <div class="keymap-row"><span>Search</span><span><kbd>Enter</kbd></span></div>
+                            <div class="keymap-row"><span>New line</span><span><kbd>Shift</kbd><kbd>Enter</kbd></span></div>
+                            <div class="keymap-row"><span>Focus search</span><span><kbd>/</kbd></span></div>
+                            <div class="keymap-row"><span>Customize</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+                            <div class="keymap-row"><span>Save design</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+                            <div class="keymap-row"><span>Close / back</span><span><kbd>Esc</kbd></span></div>
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="about-footer">
+                    <span>Engine v2.4.0 · Aurora · Made by Max</span>
+                    <button class="btn btn-primary" id="aboutHomeBtn" type="button">
+                        Back Home
+                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    </button>
+                </footer>
+            </main>
+        </div>
+    </div>

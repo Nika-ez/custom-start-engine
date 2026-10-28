@@ -1,0 +1,392 @@
+    <!-- ============================== CUSTOMIZER ============================== -->
+    <div class="view-panel hidden" id="editView">
+        <div class="page-shell settings-shell">
+            <header class="page-topbar">
+                <button class="btn btn-ghost" id="editorBackBtn" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+                    Engine
+                </button>
+                <div class="page-topbar-actions">
+                    <span class="dirty-indicator" id="dirtyIndicator">
+                        <span class="dirty-dot" aria-hidden="true"></span>
+                        Unsaved
+                    </span>
+                    <button class="btn btn-primary" id="topSaveBtn" type="button" disabled>Save</button>
+                </div>
+            </header>
+
+            <main class="settings-main">
+                <div class="settings-head">
+                    <p class="about-kicker">Engine Customizer</p>
+                    <h1>Make it yours.</h1>
+                    <p>Changes preview live. Nothing is written until you save.</p>
+                </div>
+
+                <nav class="tabs" role="tablist" aria-label="Customizer sections">
+                    <button class="tab active" id="tabBtnAppearance" type="button" role="tab" aria-selected="true" aria-controls="tab-appearance" data-tab="appearance" tabindex="0">Appearance</button>
+                    <button class="tab" id="tabBtnSearch" type="button" role="tab" aria-selected="false" aria-controls="tab-search" data-tab="search" tabindex="-1">Search &amp; shortcuts</button>
+                    <button class="tab" id="tabBtnBehaviour" type="button" role="tab" aria-selected="false" aria-controls="tab-behaviour" data-tab="behaviour" tabindex="-1">Behaviour</button>
+                    <button class="tab" id="tabBtnData" type="button" role="tab" aria-selected="false" aria-controls="tab-data" data-tab="data" tabindex="-1">Data &amp; backup</button>
+                </nav>
+
+                <section class="tab-panel active" id="tab-appearance" role="tabpanel" aria-labelledby="tabBtnAppearance">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Theme</h2>
+                            <p class="card-sub">Pick a base palette. The accent colour is yours to bend.</p>
+                            <div class="theme-grid" id="themeGrid"></div>
+                            <div class="field">
+                                <label for="accentColor">Accent colour</label>
+                                <div class="field-row">
+                                    <input type="color" id="accentColor" data-config="accent" aria-label="Accent colour">
+                                    <input type="text" id="accentHex" class="input mono" maxlength="7" aria-label="Accent colour hex code" spellcheck="false">
+                                    <button class="btn btn-ghost" id="resetAccentBtn" type="button">Theme accent</button>
+                                </div>
+                                <span class="hint">Used for the search ring, buttons, switches and little glowing things.</span>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Background</h2>
+                            <p class="card-sub">Aurora drifts. Mesh sits still. Image gets out of the way.</p>
+                            <div class="field">
+                                <label for="bgStyle">Background style</label>
+                                <select id="bgStyle" class="input" data-config="background">
+                                    <option value="aurora">Aurora (animated)</option>
+                                    <option value="mesh">Mesh gradient</option>
+                                    <option value="solid">Solid theme colour</option>
+                                    <option value="image">Custom image</option>
+                                </select>
+                            </div>
+                            <div id="imageBgFields" class="hidden">
+                                <div class="field">
+                                    <label for="bgUrl">Image URL</label>
+                                    <input type="text" id="bgUrl" class="input" data-config="customBackgroundUrl" placeholder="https://example.com/wallpaper.jpg" spellcheck="false">
+                                    <span class="hint">HTTPS, HTTP, data:image or a local file path. The image is loaded when the page opens.</span>
+                                </div>
+                                <div class="field">
+                                    <label for="bgDim">Dim overlay <span class="hint" id="dimValue">55%</span></label>
+                                    <input type="range" id="bgDim" data-config="backgroundDim" min="0" max="90" step="1" value="55">
+                                </div>
+                                <div class="field">
+                                    <label for="bgBlur">Image blur <span class="hint" id="blurValue">0px</span></label>
+                                    <input type="range" id="bgBlur" data-config="backgroundBlur" min="0" max="24" step="1" value="0">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Home screen</h2>
+                            <p class="card-sub">Keep the useful bits and hide the rest.</p>
+                            <div class="field">
+                                <label for="userName">Your name</label>
+                                <input type="text" id="userName" class="input" data-config="userName" maxlength="24" placeholder="Max" autocomplete="off">
+                                <span class="hint">Used in the greeting. Leave it empty for a plain hello.</span>
+                            </div>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show clock</span>
+                                        <span class="toggle-desc">A small time pill in the top bar.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showClock" aria-label="Show clock">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">24-hour clock</span>
+                                        <span class="toggle-desc">Switch from 12-hour to 24-hour time.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="clock24h" aria-label="Use 24-hour clock">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show greeting</span>
+                                        <span class="toggle-desc">The greeting and date above the search bars.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGreeting" aria-label="Show greeting">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show shortcut chips</span>
+                                        <span class="toggle-desc">Quick-launch pills under the search bars.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showShortcutChips" aria-label="Show shortcut chips">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Compact layout</span>
+                                        <span class="toggle-desc">Pull everything a little closer together.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="compact" aria-label="Use compact layout">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-search" role="tabpanel" aria-labelledby="tabBtnSearch">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Search engine</h2>
+                            <p class="card-sub">Where the top bar sends your query.</p>
+                            <div class="field">
+                                <label for="searchEngine">Default engine</label>
+                                <select id="searchEngine" class="input" data-config="searchEngine">
+                                    <option value="google">Google</option>
+                                    <option value="duckduckgo">DuckDuckGo</option>
+                                    <option value="bing">Bing</option>
+                                    <option value="brave">Brave Search</option>
+                                    <option value="startpage">Startpage</option>
+                                    <option value="custom">Custom URL</option>
+                                </select>
+                            </div>
+                            <div id="customSearchFields" class="hidden">
+                                <div class="field">
+                                    <label for="customSearchUrl">Custom search URL</label>
+                                    <input type="text" id="customSearchUrl" class="input mono" data-config="customSearchUrl" placeholder="https://example.com/search?q={query}" spellcheck="false">
+                                    <span class="hint">Use <strong>{query}</strong> where the search term should go. <strong>%s</strong> also works.</span>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="googlePlaceholder">Google bar placeholder</label>
+                                <input type="text" id="googlePlaceholder" class="input" data-config="googlePlaceholder" maxlength="60" placeholder="Search Google...">
+                            </div>
+                            <div class="field">
+                                <label for="geminiPlaceholder">Gemini bar placeholder</label>
+                                <input type="text" id="geminiPlaceholder" class="input" data-config="geminiPlaceholder" maxlength="60" placeholder="Ask Gemini...">
+                            </div>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show Google bar</span>
+                                        <span class="toggle-desc">The main search field.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGoogle" aria-label="Show Google search bar">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Show Gemini bar</span>
+                                        <span class="toggle-desc">The prompt field with the sparkle button.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="showGemini" aria-label="Show Gemini bar">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Open searches in a new tab</span>
+                                        <span class="toggle-desc">Keep Engine open when you search.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="openSearchInNewTab" aria-label="Open searches in a new tab">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Copy Gemini prompts</span>
+                                        <span class="toggle-desc">Copy the text, open Gemini, then clear the bar.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="copyGeminiPrompt" aria-label="Copy Gemini prompts to the clipboard">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Shortcuts</h2>
+                            <p class="card-sub">Type a trigger in either bar and press Enter. Shortcuts always open in a new tab.</p>
+                            <div class="shortcut-editor">
+                                <div class="sc-form">
+                                    <input type="text" id="scTriggerInput" class="input" maxlength="24" placeholder="e.g. yt" aria-label="Shortcut trigger" spellcheck="false" autocomplete="off">
+                                    <input type="text" id="scUrlInput" class="input" placeholder="https://youtube.com" aria-label="Shortcut URL" spellcheck="false" autocomplete="off">
+                                    <button class="btn btn-primary" id="scSaveBtn" type="button">Add</button>
+                                </div>
+                                <div class="sc-list" id="shortcutEditorList"></div>
+                                <div class="field-row">
+                                    <span class="hint"><span id="shortcutCountLabel">0</span> saved · triggers are 1–24 characters, lower-case by default.</span>
+                                    <button class="btn btn-ghost hidden" id="scCancelBtn" type="button">Cancel edit</button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-behaviour" role="tabpanel" aria-labelledby="tabBtnBehaviour">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Startup &amp; memory</h2>
+                            <p class="card-sub">How Engine behaves when it wakes up.</p>
+                            <div class="toggle-list">
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Autofocus search</span>
+                                        <span class="toggle-desc">Put the cursor in the search bar on load (desktop pointers only).</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="autofocus" aria-label="Autofocus search on load">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-copy">
+                                        <span class="toggle-title">Save drafts</span>
+                                        <span class="toggle-desc">Remember unfinished search and Gemini text between visits.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" data-config="saveDrafts" aria-label="Save drafts">
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="info-box" style="margin-top:16px;">
+                                <strong>Tip:</strong> Shift + Enter adds a new line. Enter sends. Shortcuts beat search when the whole query is a trigger.
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Keyboard</h2>
+                            <p class="card-sub">Built for people who hate reaching for the mouse.</p>
+                            <div class="keymap">
+                                <div class="keymap-row"><span>Focus search</span><span><kbd>/</kbd></span></div>
+                                <div class="keymap-row"><span>Open customizer</span><span><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+                                <div class="keymap-row"><span>Save design (in customizer)</span><span><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+                                <div class="keymap-row"><span>Close dialog / leave view</span><span><kbd>Esc</kbd></span></div>
+                                <div class="keymap-row"><span>New line in a bar</span><span><kbd>Shift</kbd><kbd>Enter</kbd></span></div>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Good to know</h2>
+                            <p class="card-sub">Small facts that save future-you a headache.</p>
+                            <div class="keymap">
+                                <div class="keymap-row"><span>Storage</span><span>This browser, on this device</span></div>
+                                <div class="keymap-row"><span>Config namespace</span><span class="mono">sp2:config</span></div>
+                                <div class="keymap-row"><span>Old shortcuts key</span><span class="mono">engineShortcuts</span></div>
+                                <div class="keymap-row"><span>Word from the author</span><span>Max</span></div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="tab-panel" id="tab-data" role="tabpanel" aria-labelledby="tabBtnData">
+                    <div class="settings-grid">
+                        <section class="card">
+                            <h2>Backup</h2>
+                            <p class="card-sub">Everything lives in one JSON object. Take it with you.</p>
+                            <div class="data-actions">
+                                <button class="btn btn-primary" id="exportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                                    Export file
+                                </button>
+                                <button class="btn btn-secondary" id="copyConfigBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+                                    Copy JSON
+                                </button>
+                                <button class="btn btn-secondary" id="importFileBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+                                    Import file
+                                </button>
+                                <button class="btn btn-secondary" id="pasteImportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>
+                                    Import text
+                                </button>
+                            </div>
+                            <input type="file" id="importFileInput" accept="application/json,.json" hidden>
+                            <div class="info-box">
+                                <strong>Last saved:</strong> <span id="lastSavedLabel">Not saved yet</span><br>
+                                <strong>Config size:</strong> <span id="configSizeLabel">0 KB</span>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>v2.3 legacy settings</h2>
+                            <p class="card-sub">The old page kept its data in separate keys. Engine reads them automatically on first run, and you can pull them in again here.</p>
+                            <div class="info-box" id="legacyStatus">Checking for old settings…</div>
+                            <div class="data-actions">
+                                <button class="btn btn-secondary" id="legacyImportBtn" type="button">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>
+                                    Import v2.3 settings
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="card">
+                            <h2>Maintenance</h2>
+                            <p class="card-sub">The clean-up cupboard. Nothing here is reversible.</p>
+                            <div class="data-actions">
+                                <button class="btn btn-secondary" id="clearDraftsBtn" type="button">Clear drafts</button>
+                                <button class="btn btn-secondary" id="resetPrefsBtn" type="button">Reset preferences</button>
+                                <button class="btn btn-danger" id="factoryResetBtn" type="button">Factory reset</button>
+                            </div>
+                            <div class="info-box" id="storageStatus">Checking local storage…</div>
+                        </section>
+                    </div>
+                </section>
+
+                <div class="settings-actions">
+                    <div class="settings-actions-left">
+                        <button class="btn btn-ghost" id="revertBtn" type="button">Revert changes</button>
+                        <span class="dirty-indicator" id="dirtyIndicatorBottom">
+                            <span class="dirty-dot" aria-hidden="true"></span>
+                            Unsaved
+                        </span>
+                    </div>
+                    <div class="settings-actions-right">
+                        <button class="btn btn-secondary" id="bottomSaveBtn" type="button" disabled>Save design</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================== GLOBAL UI ============================== -->
+    <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+        <div class="modal-box" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalText" tabindex="-1">
+            <div class="modal-head">
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <button class="icon-btn modal-x" id="modalCloseBtn" type="button" aria-label="Close dialog">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <p class="modal-text" id="modalText"></p>
+            <label class="modal-field hidden" id="modalField">
+                <span id="modalFieldLabel">Config JSON</span>
+                <textarea class="input modal-textarea" id="modalInput" spellcheck="false"></textarea>
+            </label>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+        <div class="w10-spinner">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
+
+    <script>
+    (() => {
+        "use strict";
