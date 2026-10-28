@@ -295,7 +295,7 @@
             const url = URL.createObjectURL(blob);
             const anchor = document.createElement("a");
             anchor.href = url;
-            anchor.download = "engine-config-v2.4.json";
+            anchor.download = "custom-start-engine-config-v2.4.json";
             document.body.appendChild(anchor);
             anchor.click();
             anchor.remove();
@@ -318,7 +318,7 @@
 
             const known = Object.keys(DEFAULT_CONFIG).filter((key) => key !== "configVersion");
             if (!known.some((key) => Object.prototype.hasOwnProperty.call(parsed, key))) {
-                throw new Error("That JSON does not look like an Engine config.");
+                throw new Error("That JSON does not look like a Custom Start Engine config.");
             }
 
             const incoming = { ...parsed };
@@ -341,7 +341,7 @@
         const openImportTextModal = () => {
             openModal({
                 title: "Import config from text",
-                text: "Paste an Engine config backup below. It loads into the customizer as an unsaved draft.",
+                text: "Paste a Custom Start Engine config backup below. It loads into the customizer as an unsaved draft.",
                 field: {
                     label: "Config JSON",
                     value: "",
@@ -487,7 +487,7 @@
         const factoryReset = () => {
             openModal({
                 title: "Factory reset everything?",
-                text: "This wipes Engine settings, shortcuts, drafts and the v2.3 legacy keys on this device. There is no undo button. Export a backup first if you care about it.",
+                text: "This wipes Custom Start Engine settings, shortcuts, drafts and the v2.3 legacy keys on this device. There is no undo button. Export a backup first if you care about it.",
                 actions: [
                     { label: "Cancel", variant: "secondary", autofocus: true },
                     {
@@ -517,7 +517,7 @@
                             applyConfig(savedConfig);
                             syncSettingsUI();
                             renderVersionView();
-                            toast("Factory reset complete. A clean Engine awaits.", "success", 3600);
+                            toast("Factory reset complete. A clean start awaits.", "success", 3600);
                         }
                     }
                 ]

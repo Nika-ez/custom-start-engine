@@ -1,4 +1,4 @@
-# Engine — Startpage
+# Custom Start Engine
 
 A single-file, offline-first startpage with Google and Gemini search bars, quick-launch shortcuts, themes, custom backgrounds and a full visual customizer.
 
@@ -6,7 +6,11 @@ A single-file, offline-first startpage with Google and Gemini search bars, quick
 
 ## Live site
 
-GitHub Pages URL: `https://nika-ez.github.io/`
+**[Open Custom Start Engine →](https://nika-ez.github.io/custom-start-engine/)**
+
+Direct link: <https://nika-ez.github.io/custom-start-engine/>
+
+The old `https://nika-ez.github.io/` address redirects to the new link.
 
 ## Use locally
 
